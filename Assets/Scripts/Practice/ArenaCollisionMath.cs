@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Stickman.Practice
 {
     /// <summary>
-    /// Zero-GC analytical 2D XZ depenetration against all 40 walls, 18 turrets, 2 nexuses,
+    /// Zero-GC analytical 2D XZ depenetration against all 44 walls, 18 turrets, 2 nexuses,
     /// and outer arena boundaries so hero movement never stalls or gets trapped in corners/edges.
     /// </summary>
     public static class ArenaCollisionMath
@@ -20,7 +20,7 @@ namespace Stickman.Practice
                 Vector2[][] walls = ArenaLayoutData.Walls;
                 for (int w = 0; w < walls.Length; w++)
                 {
-                    pos = PushOutPolygon(pos, walls[w], heroRadius);
+                    pos = PushOutPolygon(pos, walls[w], heroRadius, limit);
                 }
 
                 pos = PushOutCircle(pos, ArenaLayoutData.BlueNexus, ArenaLayoutData.NexusRadius, heroRadius);
@@ -40,13 +40,18 @@ namespace Stickman.Practice
             return pos;
         }
 
-        static Vector2 PushOutPolygon(Vector2 pos, Vector2[] poly, float heroRadius)
+        static Vector2 PushOutPolygon(Vector2 pos, Vector2[] poly, float heroRadius, float limit)
         {
             if (poly == null || poly.Length < 3) return pos;
 
+            bool inside = PolygonMeshBuilder.ContainsPoint(poly, pos);
+
             float bestDistSq = float.MaxValue;
-            Vector2 bestQ = pos;
-            Vector2 bestOutNormal = Vector2.right;
+            Vector2 bestCandidate = pos;
+
+            float bestInBoundsDistSq = float.MaxValue;
+            Vector2 bestInBoundsCandidate = pos;
+            bool hasInBounds = false;
 
             int n = poly.Length;
             for (int i = 0; i < n; i++)
@@ -60,30 +65,43 @@ namespace Stickman.Practice
                 float dx = pos.x - q.x;
                 float dy = pos.y - q.y;
                 float dSq = dx * dx + dy * dy;
+
+                float len = Mathf.Sqrt(lenSq);
+                Vector2 edgeOutNormal = len > 1e-5f ? new Vector2(ab.y / len, -ab.x / len) : Vector2.right;
+
+                Vector2 candidate;
+                if (inside)
+                {
+                    float d = Mathf.Sqrt(dSq);
+                    Vector2 nOut = d > 1e-5f ? new Vector2((q.x - pos.x) / d, (q.y - pos.y) / d) : edgeOutNormal;
+                    candidate = q + nOut * (heroRadius + 0.03f);
+                }
+                else
+                {
+                    float d = Mathf.Sqrt(dSq);
+                    Vector2 away = d > 1e-5f ? new Vector2(dx / d, dy / d) : edgeOutNormal;
+                    candidate = q + away * (heroRadius + 0.015f);
+                }
+
                 if (dSq < bestDistSq)
                 {
                     bestDistSq = dSq;
-                    bestQ = q;
-                    float len = Mathf.Sqrt(lenSq);
-                    bestOutNormal = len > 1e-5f ? new Vector2(ab.y / len, -ab.x / len) : Vector2.right;
+                    bestCandidate = candidate;
+                }
+
+                if (inside && Mathf.Abs(candidate.x) <= limit && Mathf.Abs(candidate.y) <= limit && dSq < bestInBoundsDistSq)
+                {
+                    bestInBoundsDistSq = dSq;
+                    bestInBoundsCandidate = candidate;
+                    hasInBounds = true;
                 }
             }
 
-            bool inside = PolygonMeshBuilder.ContainsPoint(poly, pos);
             if (inside)
-            {
-                Vector2 away = bestQ - pos;
-                float d = away.magnitude;
-                Vector2 nOut = d > 1e-5f ? (away / d) : bestOutNormal;
-                return bestQ + nOut * (heroRadius + 0.03f);
-            }
+                return hasInBounds ? bestInBoundsCandidate : bestCandidate;
 
             if (bestDistSq < heroRadius * heroRadius)
-            {
-                float d = Mathf.Sqrt(bestDistSq);
-                Vector2 away = d > 1e-5f ? ((pos - bestQ) / d) : bestOutNormal;
-                return bestQ + away * (heroRadius + 0.015f);
-            }
+                return bestCandidate;
 
             return pos;
         }
