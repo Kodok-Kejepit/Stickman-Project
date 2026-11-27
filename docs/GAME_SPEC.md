@@ -91,8 +91,19 @@ Gaya kamera MOBA mobile: perspektif, dari atas miring, **tidak bisa diputar**, u
 
 ## 8. Arena & tampilan
 
-- Arena original (bukan salinan peta MOBA mana pun): lantai datar, banyak **dinding/pilar/semak tebal** berjarak
-  beragam agar bisa latihan kabel pendek dan panjang, dengan lorong dan sudut.
+- Layout peta mengikuti tata letak 3-lane MOBA (acuan skema dari owner) dan seluruh objek/geometri **dibuat manual dari
+  nol** di Unity (graybox mesh + collider pada layer `Wall`, tanpa aset ekstrak dari game lain), agar jarak, sudut, dan
+  celah dinding latihan *straight cable* sesuai dengan permainan nyata:
+  - **Base:** base biru (kiri-bawah) dan base merah (kanan-atas) dengan dinding base, penanda nexus, dan 3 inhibitor turret.
+  - **3 Lane:** Top/EXP lane (tepi kiri + atas dengan dinding luar & bush pinggir), Mid lane (diagonal), Bot/Gold lane
+    (tepi bawah + kanan dengan dinding luar & bush pinggir), lengkap dengan penanda turret luar/dalam/inhibitor.
+  - **Sungai & Pit:** sungai diagonal kiri-atas ke kanan-bawah dengan 2 pit melingkar (Turtle/Lord) berdinding bulan sabit,
+    dinding tepi sungai, dan bush tengah sungai.
+  - **Dinding Hutan & Lorong (4 kuadran, simetris):** bentuk dinding tebal/tipis khas hutan termasuk dinding huruf-C di
+    sekitar buff biru/ungu, dinding buff merah/oranye, dinding sudut mid, dan celah lorong antar-hutan ke lane untuk
+    latihan *straight* & *chain cable*.
+  - **Semak (bush):** zona visual graybox (hijau gelap, tidak menghalangi gerak atau kabel) di tepi lane, sungai, dan
+    pintu masuk hutan.
 - Graybox: warna datar URP, dinding mudah dibedakan dari lantai, garis aim kontras.
 - Efek ringan: jejak garis kabel, partikel kecil saat anchor menancap, sedikit shake saat mendarat (bisa dimatikan).
 - HUD: bar energi (besar, dekat hero atau di bawah), cooldown skill, statistik drill, FPS (toggle).

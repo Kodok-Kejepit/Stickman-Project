@@ -15,3 +15,5 @@ Catat keputusan teknis dan alasannya (satu baris per keputusan, terbaru di bawah
 - Frame rate: `QualitySettings.vSyncCount = 0` + `Application.targetFrameRate` = refresh rate layar (dibatasi 30–120),
   atau pilihan pemain jika lebih kecil (`Core.FrameRate`).
 - Harness verifikasi `-autoshot <folder>` dimulai di M0 (`Core.AutoShot`): screenshot `boot.png` + `diag.txt` + `errors.txt`.
+- CI sementara memakai remote `build` (`Kodok-Kejepit/aethvirse`, branch `stickman`) sampai secret `UNITY_EMAIL`/`UNITY_PASSWORD` dipasang di `Stickman-Project`; M0 lulus penuh di run `45930303372`.
+- M1+ arena memakai layout 3-lane MOBA (base, 3 lane, sungai + 2 pit bulan sabit, 4 kuadran dinding hutan + dinding buff bentuk C, penanda turret, bush non-blocking) yang dibangun manual dari graybox mesh/collider tanpa aset ekstrak, agar latihan straight cable akurat.
