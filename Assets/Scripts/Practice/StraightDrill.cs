@@ -121,7 +121,7 @@ namespace Stickman.Practice
                 {
                     float angleRad = (step * 15f) * Mathf.Deg2Rad;
                     Vector3 dir = new Vector3(Mathf.Cos(angleRad), 0f, Mathf.Sin(angleRad));
-                    if (Physics.RaycastNonAlloc(origin, dir, _hits, 24f, _wallMask, QueryTriggerInteraction.Ignore) > 0)
+                    if (Physics.RaycastNonAlloc(origin, dir, _hits, 28f, _wallMask, QueryTriggerInteraction.Ignore) > 0)
                     {
                         chosen = new Vector3(_hits[0].point.x, 0f, _hits[0].point.z);
                         found = true;

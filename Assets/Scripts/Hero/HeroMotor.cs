@@ -5,7 +5,7 @@ namespace Stickman.Hero
 {
     /// <summary>
     /// Continuous swept-capsule motor in <c>Update</c>: sub-stepped <c>CapsuleCastNonAlloc</c> + wall sliding
-    /// + overlap depenetration so 29 u/s dual-cable flight never tunnels through thin walls.
+    /// + analytical 2D depenetration so flight never tunnels or stalls in map corners/edges/obstacles.
     /// Zero GC allocations per frame.
     /// </summary>
     public sealed class HeroMotor : MonoBehaviour
@@ -17,7 +17,6 @@ namespace Stickman.Hero
         [SerializeField] HeroTuning tuning;
 
         readonly RaycastHit[] _castHits = new RaycastHit[8];
-        readonly Collider[] _overlapHits = new Collider[8];
 
         int _wallMask;
         int _groundMask;
@@ -34,20 +33,17 @@ namespace Stickman.Hero
         void Awake()
         {
             _wallMask = 1 << WallLayer;
-            _groundMask = (1 << WallLayer) | 1; // Wall + Default (turrets/nexuses) when grounded.
+            _groundMask = _wallMask; // Layer 8 includes all walls, outer borders, 18 turrets, and 2 nexuses.
             gameObject.layer = HeroLayer;
         }
 
         public void Teleport(Vector3 worldPos)
         {
-            worldPos.y = 0f;
-            float limit = ArenaLayoutData.HalfExtent - (tuning != null ? tuning.heroRadius + 0.5f : 1f);
-            worldPos.x = Mathf.Clamp(worldPos.x, -limit, limit);
-            worldPos.z = Mathf.Clamp(worldPos.z, -limit, limit);
-            transform.position = worldPos;
+            float radius = tuning != null ? tuning.heroRadius : 0.45f;
+            Vector2 resolved = ArenaCollisionMath.ResolveDepenetrationXZ(new Vector2(worldPos.x, worldPos.z), radius);
+            transform.position = new Vector3(resolved.x, 0f, resolved.y);
             Velocity = Vector3.zero;
             IsBlockedThisFrame = false;
-            Depenetrate(_wallMask);
         }
 
         public void FaceDirection(Vector3 dirXZ, float dt, bool instant = false)
@@ -73,6 +69,7 @@ namespace Stickman.Hero
                 return;
             }
 
+            Depenetrate();
             Vector3 startPos = transform.position;
             startPos.y = 0f;
             Vector3 totalDelta = velocityXZ * dt;
@@ -96,16 +93,14 @@ namespace Stickman.Hero
                 pos = SweepWithSlide(pos, subDelta, radius, mask);
             }
 
-            float limit = ArenaLayoutData.HalfExtent - radius - 0.5f;
-            pos.x = Mathf.Clamp(pos.x, -limit, limit);
-            pos.z = Mathf.Clamp(pos.z, -limit, limit);
-            pos.y = 0f;
-
+            Vector2 resolved = ArenaCollisionMath.ResolveDepenetrationXZ(new Vector2(pos.x, pos.z), radius);
+            pos = new Vector3(resolved.x, 0f, resolved.y);
             transform.position = pos;
-            Depenetrate(mask);
 
-            Vector3 actualMove = transform.position - startPos;
+            Vector3 actualMove = pos - startPos;
             actualMove.y = 0f;
+            float actualDist = actualMove.magnitude;
+            IsBlockedThisFrame = totalDist > 0.01f && actualDist < totalDist * 0.35f;
             Velocity = actualMove / dt;
         }
 
@@ -127,12 +122,23 @@ namespace Stickman.Hero
                 int hitCount = Physics.CapsuleCastNonAlloc(p1, p2, radius, dir, _castHits, dist + skin, mask, QueryTriggerInteraction.Ignore);
                 int bestIdx = -1;
                 float bestDist = float.MaxValue;
+                Vector3 bestNormalXZ = Vector3.zero;
+
                 for (int i = 0; i < hitCount; i++)
                 {
-                    if (_castHits[i].distance < bestDist)
+                    RaycastHit hit = _castHits[i];
+                    if (hit.distance <= 0.0001f && hit.point == Vector3.zero) continue;
+                    Vector3 nXZ = hit.normal;
+                    nXZ.y = 0f;
+                    if (nXZ.sqrMagnitude < 0.0001f) continue;
+                    nXZ.Normalize();
+                    if (Vector3.Dot(dir, nXZ) >= -0.01f) continue;
+
+                    if (hit.distance < bestDist)
                     {
-                        bestDist = _castHits[i].distance;
+                        bestDist = hit.distance;
                         bestIdx = i;
+                        bestNormalXZ = nXZ;
                     }
                 }
 
@@ -142,51 +148,24 @@ namespace Stickman.Hero
                     break;
                 }
 
-                IsBlockedThisFrame = true;
                 float safeTravel = Mathf.Max(0f, bestDist - skin);
                 pos += dir * safeTravel;
 
-                Vector3 normal = _castHits[bestIdx].normal;
-                normal.y = 0f;
-                if (normal.sqrMagnitude < 0.0001f) break;
-                normal.Normalize();
-
                 float leftoverLen = Mathf.Max(0f, dist - safeTravel);
                 Vector3 leftover = dir * leftoverLen;
-                remaining = Vector3.ProjectOnPlane(leftover, normal);
+                remaining = Vector3.ProjectOnPlane(leftover, bestNormalXZ);
                 remaining.y = 0f;
             }
 
             return pos;
         }
 
-        void Depenetrate(int mask)
+        void Depenetrate()
         {
             if (tuning == null) return;
-            float radius = tuning.heroRadius;
-            float height = tuning.heroHeight;
             Vector3 pos = transform.position;
-            Vector3 p1 = new Vector3(pos.x, radius + 0.05f, pos.z);
-            Vector3 p2 = new Vector3(pos.x, Mathf.Max(radius + 0.1f, height - radius), pos.z);
-
-            int count = Physics.OverlapCapsuleNonAlloc(p1, p2, radius, _overlapHits, mask, QueryTriggerInteraction.Ignore);
-            for (int i = 0; i < count; i++)
-            {
-                Collider other = _overlapHits[i];
-                if (other == null) continue;
-                Vector3 myCenter = pos + new Vector3(0f, height * 0.5f, 0f);
-                // Simple horizontal pushout along closest point on static collider.
-                Vector3 closest = other.ClosestPoint(myCenter);
-                Vector3 away = pos - closest;
-                away.y = 0f;
-                float d = away.magnitude;
-                if (d > 0.0001f && d < radius)
-                {
-                    pos += (away / d) * (radius - d + 0.01f);
-                }
-            }
-            pos.y = 0f;
-            transform.position = pos;
+            Vector2 resolved = ArenaCollisionMath.ResolveDepenetrationXZ(new Vector2(pos.x, pos.z), tuning.heroRadius);
+            transform.position = new Vector3(resolved.x, 0f, resolved.y);
         }
     }
 }

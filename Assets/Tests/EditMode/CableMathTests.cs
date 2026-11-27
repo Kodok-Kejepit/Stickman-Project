@@ -54,16 +54,16 @@ namespace Stickman.Tests
         [Test]
         public void SingleCableHitsAndPullsStraightToAnchor()
         {
-            var eng = new CableEngine(maxRange: 15f, shootSpeed: 100f, singlePullSpeed: 24f);
+            var eng = new CableEngine(maxRange: 20f, shootSpeed: 100f, singlePullSpeed: 14.5f);
             Vector3 hero = Vector3.zero;
-            Assert.That(eng.TryCast(hero, Vector3.forward, 0f, 0.1f, out _), Is.True);
+            Assert.That(eng.TryCast(hero, Vector3.forward, 0f, 0.04f, out _), Is.True);
 
             var wall = PlaneAtZ(8f);
             eng.Step(0.1f, 0.1f, hero, false, wall, out Vector3 vel, out bool air, out _, out _, out _, out _);
 
             Assert.That(eng.LatchedCount, Is.EqualTo(1));
             Assert.That(air, Is.True);
-            Assert.That(vel.z, Is.EqualTo(24f).Within(0.05f));
+            Assert.That(vel.z, Is.EqualTo(14.5f).Within(0.05f));
             Assert.That(Mathf.Abs(vel.x), Is.LessThan(0.01f));
         }
 
@@ -72,7 +72,7 @@ namespace Stickman.Tests
         {
             var eng = new CableEngine(maxRange: 6f, shootSpeed: 100f, retractSpeed: 100f);
             Vector3 hero = Vector3.zero;
-            eng.TryCast(hero, Vector3.forward, 0f, 0.1f, out _);
+            eng.TryCast(hero, Vector3.forward, 0f, 0.04f, out _);
 
             WallSegmentCast noHit = (Vector3 a, Vector3 b, out Vector3 p, out Vector3 n) => { p = n = Vector3.zero; return false; };
             eng.Step(0.1f, 0.1f, hero, false, noHit, out Vector3 vel, out bool air, out bool pulled, out _, out _, out int missedSlot);
@@ -85,75 +85,136 @@ namespace Stickman.Tests
         }
 
         [Test]
-        public void DualSymmetricStraightCableFliesStraightAndDetachesCleanlyWithZeroBackwardBounce()
+        public void DualSymmetricStraightCableFliesPastWallsToSymmetryWithZeroBounce()
         {
-            var eng = new CableEngine(maxRange: 16f, shootSpeed: 200f, dualPullSpeed: 30f, detachRadius: 0.9f, glideSpeed: 10f, glideDuration: 0.1f);
+            var eng = new CableEngine(maxRange: 28f, shootSpeed: 200f, dualPullSpeed: 21.5f, detachRadius: 0.95f, glideSpeed: 9.5f, glideDuration: 0.09f, dualMinSpeed: 15.5f);
             var walls = TwoVerticalWalls(-6f, 6f);
             Vector3 hero = new Vector3(0f, 0f, -8f);
 
-            eng.TryCast(hero, new Vector3(-6f, 0f, 8f).normalized, 0f, 0.1f, out _);
+            eng.TryCast(hero, new Vector3(-6f, 0f, 8f).normalized, 0f, 0.04f, out _);
             eng.Step(0.08f, 0.08f, hero, false, walls, out _, out _, out _, out _, out _, out _);
             Assert.That(eng.LatchedCount, Is.EqualTo(1));
 
-            eng.TryCast(hero, new Vector3(6f, 0f, 8f).normalized, 0.2f, 0.1f, out _);
+            eng.TryCast(hero, new Vector3(6f, 0f, 8f).normalized, 0.2f, 0.04f, out _);
             eng.Step(0.08f, 0.28f, hero, false, walls, out Vector3 vel, out _, out bool pulled, out StraightCableReport report, out _, out _);
 
             Assert.That(eng.LatchedCount, Is.EqualTo(2));
             Assert.That(report.Valid, Is.True);
             Assert.That(Mathf.Abs(vel.x), Is.LessThan(0.05f), "Symmetric cables must have zero lateral drift");
-            Assert.That(vel.z, Is.EqualTo(30f).Within(0.05f));
+            Assert.That(vel.z, Is.GreaterThan(18f));
 
-            // Simulate flying across the chord between (-6,0) and (+6,0): must NEVER pull backward!
-            for (int step = 0; step < 30; step++)
+            // Fly cleanly past the z=0 anchors toward symmetrical landing (~z=+8): never bounce backward!
+            for (int step = 0; step < 60; step++)
             {
                 hero += vel * 0.02f;
                 eng.Step(0.02f, 0.3f + step * 0.02f, hero, false, walls, out vel, out _, out pulled, out _, out _, out _);
-                Assert.That(vel.z, Is.GreaterThanOrEqualTo(-0.001f), "Hero bounced backward after passing chord at step " + step);
+                Assert.That(vel.z, Is.GreaterThanOrEqualTo(-0.001f), "Hero bounced backward at step " + step);
             }
 
-            Assert.That(hero.z, Is.GreaterThan(0f));
+            Assert.That(hero.z, Is.GreaterThan(4.0f));
             Assert.That(eng.LatchedCount, Is.EqualTo(0));
         }
 
         [Test]
-        public void ThreeCableChainDropsOldestAndKeepsMaxTwoLatched()
+        public void ThreeCableChainCreatesTrailingMeteorAndClearsOnLanding()
         {
-            var eng = new CableEngine(maxRange: 20f, shootSpeed: 300f);
+            var eng = new CableEngine(maxRange: 28f, shootSpeed: 300f, dualPullSpeed: 21.5f);
             var walls = TwoVerticalWalls(-5f, 5f);
-            Vector3 hero = Vector3.zero;
+            Vector3 hero = new Vector3(0f, 0f, -6f);
 
-            eng.TryCast(hero, new Vector3(-1f, 0f, 0.5f), 0f, 0.05f, out _);
+            eng.TryCast(hero, new Vector3(-5f, 0f, 6f), 0f, 0.04f, out _);
             eng.Step(0.05f, 0.05f, hero, false, walls, out _, out _, out _, out _, out _, out _);
 
-            eng.TryCast(hero, new Vector3(1f, 0f, 0.5f), 0.1f, 0.05f, out _);
-            eng.Step(0.05f, 0.15f, hero, false, walls, out _, out _, out _, out _, out _, out _);
+            eng.TryCast(hero, new Vector3(5f, 0f, 6f), 0.1f, 0.04f, out _);
+            eng.Step(0.05f, 0.15f, hero, false, walls, out Vector3 vel, out _, out _, out _, out _, out _);
             Assert.That(eng.LatchedCount, Is.EqualTo(2));
 
-            eng.TryCast(hero, new Vector3(-1f, 0f, 1.5f), 0.2f, 0.05f, out _);
-            eng.Step(0.05f, 0.25f, hero, false, walls, out _, out _, out _, out _, out _, out _);
+            hero += vel * 0.05f;
+            eng.TryCast(hero, new Vector3(-5f, 0f, 8f), 0.2f, 0.04f, out _);
+            eng.Step(0.05f, 0.25f, hero, false, walls, out vel, out _, out _, out _, out _, out _);
 
             Assert.That(eng.LatchedCount, Is.EqualTo(2));
+            Assert.That(eng.TrailingCount, Is.GreaterThanOrEqualTo(1));
             Assert.That(eng.MaxSimultaneousLatched, Is.EqualTo(2));
             Assert.That(eng.LatchesThisFlight, Is.EqualTo(3));
+
+            for (int step = 0; step < 90; step++)
+            {
+                hero += vel * 0.02f;
+                eng.Step(0.02f, 0.27f + step * 0.02f, hero, false, walls, out vel, out bool air, out _, out _, out _, out _);
+                if (!air && eng.LatchedCount == 0 && eng.TrailingCount == 0) break;
+            }
+
+            Assert.That(eng.LatchedCount, Is.EqualTo(0));
+            Assert.That(eng.TrailingCount, Is.EqualTo(0));
         }
 
         [Test]
-        public void OppositeAngleCableCancelsOldAnchorAndReversesCleanly()
+        public void OppositeAngleCableDemotesOlderAndReversesCleanly()
         {
-            var eng = new CableEngine(maxRange: 20f, shootSpeed: 300f, singlePullSpeed: 24f, oppositeCancelDot: -0.90f);
+            var eng = new CableEngine(maxRange: 28f, shootSpeed: 300f, singlePullSpeed: 14.5f, oppositeCancelDot: -0.90f);
             var walls = TwoVerticalWalls(-6f, 6f);
             Vector3 hero = Vector3.zero;
 
-            eng.TryCast(hero, Vector3.right, 0f, 0.05f, out _);
+            eng.TryCast(hero, Vector3.right, 0f, 0.04f, out _);
             eng.Step(0.05f, 0.05f, hero, false, walls, out _, out _, out _, out _, out _, out _);
             Assert.That(eng.LatchedCount, Is.EqualTo(1));
 
-            eng.TryCast(hero, Vector3.left, 0.1f, 0.05f, out _);
+            eng.TryCast(hero, Vector3.left, 0.1f, 0.04f, out _);
             eng.Step(0.05f, 0.15f, hero, false, walls, out Vector3 vel, out bool air, out _, out _, out _, out _);
 
             Assert.That(eng.LatchedCount, Is.EqualTo(1));
             Assert.That(air, Is.True);
-            Assert.That(vel.x, Is.EqualTo(-24f).Within(0.05f));
+            Assert.That(vel.x, Is.EqualTo(-14.5f).Within(0.05f));
+        }
+
+        [Test]
+        public void LaunchAngleScalesDualFlightSpeed()
+        {
+            var walls = TwoVerticalWalls(-6f, 6f);
+
+            // Narrow angle (~30 deg)
+            var narrowEng = new CableEngine(maxRange: 28f, shootSpeed: 400f, dualPullSpeed: 21.5f, dualMinSpeed: 15.5f);
+            Vector3 hNarrow = new Vector3(0f, 0f, -22.39f);
+            narrowEng.TryCast(hNarrow, new Vector3(-6f, 0f, 22.39f).normalized, 0f, 0.04f, out _);
+            narrowEng.Step(0.07f, 0.07f, hNarrow, false, walls, out _, out _, out _, out _, out _, out _);
+            narrowEng.TryCast(hNarrow, new Vector3(6f, 0f, 22.39f).normalized, 0.1f, 0.04f, out _);
+            narrowEng.Step(0.07f, 0.17f, hNarrow, false, walls, out Vector3 narrowVel, out _, out _, out _, out _, out _);
+
+            // Wide angle (~110 deg)
+            var wideEng = new CableEngine(maxRange: 28f, shootSpeed: 400f, dualPullSpeed: 21.5f, dualMinSpeed: 15.5f);
+            Vector3 hWide = new Vector3(0f, 0f, -4.20f);
+            wideEng.TryCast(hWide, new Vector3(-6f, 0f, 4.20f).normalized, 0f, 0.04f, out _);
+            wideEng.Step(0.07f, 0.07f, hWide, false, walls, out _, out _, out _, out _, out _, out _);
+            wideEng.TryCast(hWide, new Vector3(6f, 0f, 4.20f).normalized, 0.1f, 0.04f, out _);
+            wideEng.Step(0.07f, 0.17f, hWide, false, walls, out Vector3 wideVel, out _, out _, out _, out _, out _);
+
+            Assert.That(narrowVel.z, Is.GreaterThan(wideVel.z + 2.0f));
+        }
+
+        [Test]
+        public void LateSecondCableVeersSidewaysBeforeStraightening()
+        {
+            var eng = new CableEngine(maxRange: 28f, shootSpeed: 400f, singlePullSpeed: 14.5f, dualPullSpeed: 21.5f);
+            var walls = TwoVerticalWalls(-6f, 6f);
+            Vector3 hero = new Vector3(0f, 0f, -8f);
+
+            eng.TryCast(hero, new Vector3(-6f, 0f, 8f).normalized, 0f, 0.04f, out _);
+            Vector3 vel = Vector3.zero;
+            for (int i = 0; i < 12; i++)
+            {
+                eng.Step(0.02f, i * 0.02f, hero, false, walls, out vel, out _, out _, out _, out _, out _);
+                hero += vel * 0.02f;
+            }
+            Assert.That(hero.x, Is.LessThan(-1.0f));
+            Assert.That(vel.x, Is.LessThan(-5.0f));
+
+            Vector3 toRightWall = new Vector3(6f - hero.x, 0f, 0f - hero.z).normalized;
+            eng.TryCast(hero, toRightWall, 0.30f, 0.04f, out _);
+            eng.Step(0.05f, 0.35f, hero, false, walls, out Vector3 dualVel, out _, out _, out StraightCableReport report, out _, out _);
+
+            Assert.That(report.Valid, Is.True);
+            Assert.That(dualVel.z, Is.GreaterThan(10f));
         }
 
         [Test]

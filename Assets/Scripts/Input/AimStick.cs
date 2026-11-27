@@ -77,11 +77,10 @@ namespace Stickman.Input
                 _knob.anchoredPosition = clamped;
             }
 
-            // Check cancel: either pointer is inside CancelZone OR user dragged out then returned back inside center deadzone.
+            // Cancel strictly via CancelZone so fast aim adjustments near center never mis-cancel.
             bool inCancelZone = _cancelZone != null &&
                 RectTransformUtility.RectangleContainsScreenPoint(_cancelZone, eventData.position, eventData.pressEventCamera);
-            bool returnedToCenter = _draggedOutsideTap && scaledDelta.magnitude < TapThresholdPx * 0.7f;
-            _isCancelling = inCancelZone || returnedToCenter;
+            _isCancelling = inCancelZone;
 
             if (_draggedOutsideTap && scaledDelta.sqrMagnitude > 1f)
             {
@@ -103,9 +102,21 @@ namespace Stickman.Input
             if (!_hasPointer || eventData.pointerId != _pointerId) return;
             _hasPointer = false;
 
-            bool cancel = _isCancelling;
+            Vector2 screenDelta = eventData.position - _downScreenPos;
+            float sens = SettingsStore.Current.aimSensitivity;
+            Vector2 scaledDelta = screenDelta * sens;
+
+            bool inCancelZone = _cancelZone != null &&
+                RectTransformUtility.RectangleContainsScreenPoint(_cancelZone, eventData.position, eventData.pressEventCamera);
+            bool cancel = inCancelZone || _isCancelling;
+
             bool quickCast = !_draggedOutsideTap || !_hasAimDir;
             Vector3 dir = _aimDirXZ;
+            if (scaledDelta.magnitude >= TapThresholdPx && scaledDelta.sqrMagnitude > 1f)
+            {
+                quickCast = false;
+                dir = new Vector3(scaledDelta.x, 0f, scaledDelta.y).normalized;
+            }
 
             _draggedOutsideTap = false;
             _hasAimDir = false;

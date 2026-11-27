@@ -5,13 +5,14 @@ using UnityEngine;
 namespace Stickman.Hero
 {
     /// <summary>
-    /// Skill 2 (Steel Cable) MonoBehaviour driving <see cref="CableEngine"/>, pooled steel cable
-    /// <see cref="LineRenderer"/>s, anchor pins, and the ground Aim Guide indicator.
+    /// Skill 2 (Steel Cable) MonoBehaviour driving <see cref="CableEngine"/>, pooled steel/meteor
+    /// cable <see cref="LineRenderer"/>s, anchor pins, and twin-rail ground Aim Guide indicator.
     /// Zero GC allocations per frame.
     /// </summary>
     public sealed class CableSkill : MonoBehaviour
     {
         const float CableHeightY = 1.0f;
+        const float AimRailHalfGap = 0.28f;
 
         [SerializeField] HeroTuning tuning;
 
@@ -21,7 +22,11 @@ namespace Stickman.Hero
         readonly float[] _slotTravelStart = new float[CableEngine.MaxSlots];
         readonly Vector3[] _slotOrigins = new Vector3[CableEngine.MaxSlots];
 
-        LineRenderer _aimLine;
+        Material _activeCableMat;
+        Material _trailingCableMat;
+        Material _guideMat;
+        LineRenderer _aimLineLeft;
+        LineRenderer _aimLineRight;
         GameObject _aimHitMarker;
         CableEngine _engine;
         WallSegmentCast _cachedWallCast;
@@ -57,9 +62,10 @@ namespace Stickman.Hero
         {
             if (_cableLines[0] != null) return;
 
-            var cableMat = RuntimeMat.TintedUnlit(new Color(0.86f, 0.94f, 1.0f, 0.96f), true);
-            var pinMat = RuntimeMat.TintedUnlit(new Color(0.25f, 0.88f, 1.0f, 1f), false);
-            var guideMat = RuntimeMat.TintedUnlit(new Color(0.25f, 0.85f, 1.0f, 0.55f), true);
+            _activeCableMat = RuntimeMat.TintedUnlit(new Color(1.0f, 0.93f, 0.58f, 0.98f), true);
+            _trailingCableMat = RuntimeMat.TintedUnlit(new Color(1.0f, 0.80f, 0.32f, 0.62f), true);
+            var pinMat = RuntimeMat.TintedUnlit(new Color(1.0f, 0.85f, 0.28f, 1f), false);
+            _guideMat = RuntimeMat.TintedUnlit(new Color(0.25f, 0.85f, 1.0f, 0.55f), true);
             var guideHitMat = RuntimeMat.TintedUnlit(new Color(0.25f, 1.0f, 0.65f, 0.92f), true);
 
             for (int i = 0; i < CableEngine.MaxSlots; i++)
@@ -69,12 +75,12 @@ namespace Stickman.Hero
                 var lr = lineGo.AddComponent<LineRenderer>();
                 lr.useWorldSpace = true;
                 lr.positionCount = 2;
-                lr.startWidth = 0.085f;
-                lr.endWidth = 0.065f;
+                lr.startWidth = 0.095f;
+                lr.endWidth = 0.070f;
                 lr.numCapVertices = 2;
                 lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 lr.receiveShadows = false;
-                lr.sharedMaterial = cableMat;
+                lr.sharedMaterial = _activeCableMat;
                 lr.enabled = false;
                 _cableLines[i] = lr;
 
@@ -83,32 +89,39 @@ namespace Stickman.Hero
                 var col = pin.GetComponent<Collider>();
                 if (col != null) DestroyImmediate(col);
                 pin.transform.SetParent(transform, false);
-                pin.transform.localScale = new Vector3(0.32f, 0.32f, 0.32f);
+                pin.transform.localScale = new Vector3(0.34f, 0.34f, 0.34f);
                 pin.GetComponent<MeshRenderer>().sharedMaterial = pinMat;
                 pin.SetActive(false);
                 _anchorPins[i] = pin;
             }
 
-            var aimGo = new GameObject("CableAimGuide");
-            aimGo.transform.SetParent(transform, false);
-            _aimLine = aimGo.AddComponent<LineRenderer>();
-            _aimLine.useWorldSpace = true;
-            _aimLine.positionCount = 2;
-            _aimLine.startWidth = 0.22f;
-            _aimLine.endWidth = 0.22f;
-            _aimLine.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            _aimLine.receiveShadows = false;
-            _aimLine.sharedMaterial = guideMat;
-            _aimLine.enabled = false;
+            _aimLineLeft = CreateAimRail("CableAimRail_L", _guideMat);
+            _aimLineRight = CreateAimRail("CableAimRail_R", _guideMat);
 
             _aimHitMarker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             _aimHitMarker.name = "AimWallHitRing";
             var markerCol = _aimHitMarker.GetComponent<Collider>();
             if (markerCol != null) DestroyImmediate(markerCol);
             _aimHitMarker.transform.SetParent(transform, false);
-            _aimHitMarker.transform.localScale = new Vector3(0.9f, 0.04f, 0.9f);
+            _aimHitMarker.transform.localScale = new Vector3(1.05f, 0.04f, 1.05f);
             _aimHitMarker.GetComponent<MeshRenderer>().sharedMaterial = guideHitMat;
             _aimHitMarker.SetActive(false);
+        }
+
+        LineRenderer CreateAimRail(string objName, Material mat)
+        {
+            var go = new GameObject(objName);
+            go.transform.SetParent(transform, false);
+            var lr = go.AddComponent<LineRenderer>();
+            lr.useWorldSpace = true;
+            lr.positionCount = 2;
+            lr.startWidth = 0.08f;
+            lr.endWidth = 0.08f;
+            lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            lr.receiveShadows = false;
+            lr.sharedMaterial = mat;
+            lr.enabled = false;
+            return lr;
         }
 
         public bool TryCast(Vector3 heroPos, Vector3 dirXZ, EnergyPool energy, float now, bool noCooldown)
@@ -163,10 +176,11 @@ namespace Stickman.Hero
 
         public void UpdateAimGuide(bool show, Vector3 heroPos, Vector3 aimDirXZ, bool isCancelling)
         {
-            if (_aimLine == null) return;
+            if (_aimLineLeft == null || _aimLineRight == null) return;
             if (!show || aimDirXZ.sqrMagnitude < 0.001f || tuning == null)
             {
-                _aimLine.enabled = false;
+                _aimLineLeft.enabled = false;
+                _aimLineRight.enabled = false;
                 if (_aimHitMarker != null) _aimHitMarker.SetActive(false);
                 return;
             }
@@ -186,11 +200,17 @@ namespace Stickman.Hero
                 ? new Color(1.0f, 0.28f, 0.25f, 0.72f)
                 : (willHit ? new Color(0.25f, 1.0f, 0.65f, 0.78f) : new Color(0.45f, 0.85f, 1.0f, 0.45f));
 
-            _aimLine.sharedMaterial.SetColor("_BaseColor", lineCol);
-            _aimLine.sharedMaterial.color = lineCol;
-            _aimLine.SetPosition(0, origin);
-            _aimLine.SetPosition(1, endPos);
-            _aimLine.enabled = true;
+            _guideMat.SetColor("_BaseColor", lineCol);
+            _guideMat.color = lineCol;
+
+            Vector3 perp = new Vector3(-dir.z, 0f, dir.x) * AimRailHalfGap;
+            _aimLineLeft.SetPosition(0, origin - perp);
+            _aimLineLeft.SetPosition(1, endPos - perp);
+            _aimLineLeft.enabled = true;
+
+            _aimLineRight.SetPosition(0, origin + perp);
+            _aimLineRight.SetPosition(1, endPos + perp);
+            _aimLineRight.enabled = true;
 
             if (_aimHitMarker != null)
             {
@@ -212,7 +232,8 @@ namespace Stickman.Hero
                 if (_cableLines[i] != null) _cableLines[i].enabled = false;
                 if (_anchorPins[i] != null) _anchorPins[i].SetActive(false);
             }
-            if (_aimLine != null) _aimLine.enabled = false;
+            if (_aimLineLeft != null) _aimLineLeft.enabled = false;
+            if (_aimLineRight != null) _aimLineRight.enabled = false;
             if (_aimHitMarker != null) _aimHitMarker.SetActive(false);
         }
 
@@ -223,11 +244,21 @@ namespace Stickman.Hero
             {
                 CableSlot slot = _engine.GetSlot(i);
                 bool active = slot.State != CableSlotState.Inactive;
-                _cableLines[i].enabled = active;
+                LineRenderer lr = _cableLines[i];
+                lr.enabled = active;
                 if (active)
                 {
-                    _cableLines[i].SetPosition(0, waist);
-                    _cableLines[i].SetPosition(1, new Vector3(slot.Tip.x, CableHeightY, slot.Tip.z));
+                    bool isPrimary = slot.State == CableSlotState.Extending || slot.State == CableSlotState.Latched;
+                    Material desiredMat = isPrimary ? _activeCableMat : _trailingCableMat;
+                    if (lr.sharedMaterial != desiredMat) lr.sharedMaterial = desiredMat;
+                    lr.startWidth = isPrimary ? 0.095f : 0.070f;
+                    lr.endWidth = isPrimary ? 0.070f : 0.040f;
+
+                    Vector3 targetXZ = (slot.State == CableSlotState.Latched || slot.State == CableSlotState.Trailing)
+                        ? slot.Anchor
+                        : slot.Tip;
+                    lr.SetPosition(0, waist);
+                    lr.SetPosition(1, new Vector3(targetXZ.x, CableHeightY, targetXZ.z));
                 }
 
                 bool pinned = slot.State == CableSlotState.Latched;

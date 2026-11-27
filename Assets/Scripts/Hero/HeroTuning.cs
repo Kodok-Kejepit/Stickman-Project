@@ -7,23 +7,26 @@ namespace Stickman.Hero
     public sealed class HeroTuning : ScriptableObject
     {
         [Header("Movement")]
-        public float moveSpeed = 6.5f;
+        public float moveSpeed = 5.8f;
         public float heroRadius = 0.45f;
         public float heroHeight = 1.8f;
         public float turnSpeedDegPerSec = 900f;
 
         [Header("Steel Cable (Skill 2)")]
-        public float cableMaxRange = 15.5f;
-        public float cableShootSpeed = 72f;
-        public float cableRetractSpeed = 82f;
-        public float singleCablePullSpeed = 24f;
-        public float dualCablePullSpeed = 29f;
-        public float cableCooldown = 0.12f;
-        public float cableDetachRadius = 0.9f;
-        public float postDetachGlideSpeed = 11f;
-        public float postDetachGlideDuration = 0.11f;
+        public float cableMaxRange = 28.0f;
+        public float cableShootSpeed = 64f;
+        public float cableRetractSpeed = 90f;
+        public float singleCablePullSpeed = 14.5f;
+        public float dualCableMinSpeed = 15.5f;
+        public float dualCablePullSpeed = 21.5f;
+        public float cableCooldown = 0.04f;
+        public float cableDetachRadius = 0.95f;
+        public float postDetachGlideSpeed = 9.5f;
+        public float postDetachGlideDuration = 0.09f;
+        public float cableTrailingMaxAge = 2.6f;
+        public float cableMaxDualFlightDist = 38.0f;
         public float oppositeCancelDot = -0.92f;
-        public float blockedDetachSeconds = 0.09f;
+        public float blockedDetachSeconds = 0.14f;
 
         [Header("Energy")]
         public float maxEnergy = 100f;

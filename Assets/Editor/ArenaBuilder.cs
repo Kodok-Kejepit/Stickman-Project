@@ -131,15 +131,19 @@ namespace Stickman.EditorTools
 
             AssetDatabase.SaveAssets();
 
-            // Turrets & Nexuses (Default layer so cables fly freely past them)
+            // Turrets & Nexuses (WallLayer so cables latch cleanly and HeroMotor collides uniformly)
             var structuresParent = new GameObject("Structures");
             structuresParent.transform.SetParent(arenaRoot.transform, false);
-            BuildStructure("BlueNexus", structuresParent.transform, ArenaLayoutData.BlueNexus, 2.2f, 3.6f, stoneMat, blueTurretMat);
-            BuildStructure("RedNexus", structuresParent.transform, ArenaLayoutData.RedNexus, 2.2f, 3.6f, stoneMat, redTurretMat);
+            BuildStructure("BlueNexus", structuresParent.transform, ArenaLayoutData.BlueNexus,
+                ArenaLayoutData.NexusRadius, ArenaLayoutData.NexusHeight, stoneMat, blueTurretMat);
+            BuildStructure("RedNexus", structuresParent.transform, ArenaLayoutData.RedNexus,
+                ArenaLayoutData.NexusRadius, ArenaLayoutData.NexusHeight, stoneMat, redTurretMat);
             for (int i = 0; i < ArenaLayoutData.BlueTurrets.Length; i++)
-                BuildStructure("BlueTurret_" + i, structuresParent.transform, ArenaLayoutData.BlueTurrets[i], 1.15f, 2.6f, stoneMat, blueTurretMat);
+                BuildStructure("BlueTurret_" + i, structuresParent.transform, ArenaLayoutData.BlueTurrets[i],
+                    ArenaLayoutData.TurretRadius, ArenaLayoutData.TurretHeight, stoneMat, blueTurretMat);
             for (int i = 0; i < ArenaLayoutData.RedTurrets.Length; i++)
-                BuildStructure("RedTurret_" + i, structuresParent.transform, ArenaLayoutData.RedTurrets[i], 1.15f, 2.6f, stoneMat, redTurretMat);
+                BuildStructure("RedTurret_" + i, structuresParent.transform, ArenaLayoutData.RedTurrets[i],
+                    ArenaLayoutData.TurretRadius, ArenaLayoutData.TurretHeight, stoneMat, redTurretMat);
 
             // Load Tuning ScriptableObjects
             var heroTuning = AssetDatabase.LoadAssetAtPath<HeroTuning>(ProjectSetup.HeroTuningPath);
@@ -263,6 +267,7 @@ namespace Stickman.EditorTools
             var root = new GameObject(name);
             root.transform.SetParent(parent, false);
             root.transform.position = new Vector3(xz.x, 0f, xz.y);
+            root.layer = HeroMotor.WallLayer;
             root.isStatic = true;
 
             var cap = root.AddComponent<CapsuleCollider>();
@@ -270,20 +275,29 @@ namespace Stickman.EditorTools
             cap.radius = radius;
             cap.height = height;
 
+            var plinth = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            plinth.name = "Plinth";
+            Object.DestroyImmediate(plinth.GetComponent<Collider>());
+            plinth.transform.SetParent(root.transform, false);
+            plinth.transform.localPosition = new Vector3(0f, 0.325f, 0f);
+            plinth.transform.localScale = new Vector3(radius * 2.0f, 0.325f, radius * 2.0f);
+            plinth.GetComponent<MeshRenderer>().sharedMaterial = baseMat;
+
+            float pillarH = height * 0.85f;
             var pillar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             pillar.name = "Pillar";
             Object.DestroyImmediate(pillar.GetComponent<Collider>());
             pillar.transform.SetParent(root.transform, false);
-            pillar.transform.localPosition = new Vector3(0f, height * 0.45f, 0f);
-            pillar.transform.localScale = new Vector3(radius * 1.4f, height * 0.45f, radius * 1.4f);
+            pillar.transform.localPosition = new Vector3(0f, pillarH * 0.5f, 0f);
+            pillar.transform.localScale = new Vector3(radius * 1.35f, pillarH * 0.5f, radius * 1.35f);
             pillar.GetComponent<MeshRenderer>().sharedMaterial = baseMat;
 
             var crystal = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             crystal.name = "Crystal";
             Object.DestroyImmediate(crystal.GetComponent<Collider>());
             crystal.transform.SetParent(root.transform, false);
-            crystal.transform.localPosition = new Vector3(0f, height * 0.98f, 0f);
-            crystal.transform.localScale = Vector3.one * (radius * 1.1f);
+            crystal.transform.localPosition = new Vector3(0f, height * 0.94f, 0f);
+            crystal.transform.localScale = Vector3.one * (radius * 1.15f);
             crystal.GetComponent<MeshRenderer>().sharedMaterial = crystalMat;
         }
 

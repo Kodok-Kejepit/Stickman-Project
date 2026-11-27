@@ -86,15 +86,19 @@ namespace Stickman.Core
             yield return Capture("02_aim_cable.png");
             input.InjectAimPreview(false, Vector3.zero);
 
-            // 03: Active 2-cable Straight Cable mid-flight across Mid River
+            // 03: Active 3-cable Straight Cable chain mid-flight with golden meteor trailing cable
             hero.TeleportHero(new Vector3(-4.0f, 0f, -4.0f));
             yield return null;
             input.InjectCableCast(new Vector3(0.26f, 0f, 0.97f));
             yield return null;
+            yield return null;
             input.InjectCableCast(new Vector3(0.97f, 0f, 0.26f));
             for (int i = 0; i < 30 && (hero.State != HeroMotionState.AirborneCable || hero.Cable.ActiveLatchCount < 2); i++)
                 yield return null;
-            yield return null;
+            for (int i = 0; i < 10; i++) yield return null;
+            input.InjectCableCast(new Vector3(0.15f, 0f, 0.99f));
+            for (int i = 0; i < 25 && hero.Cable.Engine.TrailingCount < 1; i++)
+                yield return null;
             yield return Capture("03_straight_cable.png");
 
             // 04: Fly-through "Gesek" Spin + Prey Mark + floating damage on dummy
@@ -105,7 +109,7 @@ namespace Stickman.Core
             input.InjectCableCast(new Vector3(0.26f, 0f, 0.97f));
             yield return null;
             input.InjectCableCast(new Vector3(0.97f, 0f, 0.26f));
-            for (int i = 0; i < 35 && dummy.TotalDamageTaken <= 0f; i++)
+            for (int i = 0; i < 50 && dummy.TotalDamageTaken <= 0f; i++)
                 yield return null;
             yield return null;
             yield return Capture("04_gesek_dummy.png");

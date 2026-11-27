@@ -242,12 +242,12 @@ namespace Stickman.UI
             }
 
             // Draw turret pips
-            DrawDisc(buf, ArenaLayoutData.BlueNexus, 5, new Color32(60, 210, 255, 255));
-            DrawDisc(buf, ArenaLayoutData.RedNexus, 5, new Color32(255, 90, 90, 255));
+            DrawDisc(buf, ArenaLayoutData.BlueNexus, 7, new Color32(60, 210, 255, 255));
+            DrawDisc(buf, ArenaLayoutData.RedNexus, 7, new Color32(255, 90, 90, 255));
             for (int i = 0; i < ArenaLayoutData.BlueTurrets.Length; i++)
-                DrawDisc(buf, ArenaLayoutData.BlueTurrets[i], 3, new Color32(75, 200, 255, 255));
+                DrawDisc(buf, ArenaLayoutData.BlueTurrets[i], 4, new Color32(75, 200, 255, 255));
             for (int i = 0; i < ArenaLayoutData.RedTurrets.Length; i++)
-                DrawDisc(buf, ArenaLayoutData.RedTurrets[i], 3, new Color32(255, 95, 95, 255));
+                DrawDisc(buf, ArenaLayoutData.RedTurrets[i], 4, new Color32(255, 95, 95, 255));
 
             tex.SetPixels32(buf);
             tex.Apply(false, true);

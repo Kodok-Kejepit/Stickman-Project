@@ -11,6 +11,10 @@ namespace Stickman.Practice
         public const float HalfExtent = 60.0f;
         public const float WallHeight = 2.8f;
         public const float BushHeight = 0.35f;
+        public const float TurretRadius = 1.65f;
+        public const float TurretHeight = 3.8f;
+        public const float NexusRadius = 3.50f;
+        public const float NexusHeight = 4.8f;
 
         public static readonly Vector2 BlueNexus = new Vector2(-49.20f, -45.60f);
         public static readonly Vector2 RedNexus = new Vector2(49.20f, 45.60f);
@@ -102,12 +106,12 @@ namespace Stickman.Practice
 
         public static readonly Vector2[] BlueTurrets = new Vector2[]
         {
-            new Vector2(-51.60f, -27.60f), new Vector2(-55.20f, -10.80f), new Vector2(-55.80f, 27.00f), new Vector2(-36.60f, -34.20f), new Vector2(-26.40f, -22.20f), new Vector2(-14.40f, -9.60f), new Vector2(-28.80f, -51.60f), new Vector2(-6.00f, -54.00f), new Vector2(28.20f, -54.00f)
+            new Vector2(-51.60f, -27.60f), new Vector2(-55.20f, -10.80f), new Vector2(-55.80f, 27.00f), new Vector2(-36.60f, -34.20f), new Vector2(-25.80f, -23.15f), new Vector2(-13.30f, -10.30f), new Vector2(-28.80f, -51.60f), new Vector2(-6.00f, -54.00f), new Vector2(28.20f, -54.00f)
         };
 
         public static readonly Vector2[] RedTurrets = new Vector2[]
         {
-            new Vector2(51.60f, 27.60f), new Vector2(55.20f, 10.80f), new Vector2(55.80f, -27.00f), new Vector2(36.60f, 34.20f), new Vector2(26.40f, 22.20f), new Vector2(14.40f, 9.60f), new Vector2(28.80f, 51.60f), new Vector2(6.00f, 54.00f), new Vector2(-28.20f, 54.00f)
+            new Vector2(51.60f, 27.60f), new Vector2(55.20f, 10.80f), new Vector2(55.80f, -27.00f), new Vector2(36.60f, 34.20f), new Vector2(25.20f, 23.10f), new Vector2(13.10f, 11.00f), new Vector2(28.80f, 51.60f), new Vector2(6.00f, 54.00f), new Vector2(-28.20f, 54.00f)
         };
 
         public struct TeleportSpot

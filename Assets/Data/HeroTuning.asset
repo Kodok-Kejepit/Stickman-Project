@@ -12,21 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ecdc4e47460b34758630ebb1dd72203, type: 3}
   m_Name: HeroTuning
   m_EditorClassIdentifier: Stickman::Stickman.Hero.HeroTuning
-  moveSpeed: 6.5
+  moveSpeed: 5.8
   heroRadius: 0.45
   heroHeight: 1.8
   turnSpeedDegPerSec: 900
-  cableMaxRange: 15.5
-  cableShootSpeed: 72
-  cableRetractSpeed: 82
-  singleCablePullSpeed: 24
-  dualCablePullSpeed: 29
-  cableCooldown: 0.12
-  cableDetachRadius: 0.9
-  postDetachGlideSpeed: 11
-  postDetachGlideDuration: 0.11
+  cableMaxRange: 28
+  cableShootSpeed: 64
+  cableRetractSpeed: 90
+  singleCablePullSpeed: 14.5
+  dualCableMinSpeed: 15.5
+  dualCablePullSpeed: 21.5
+  cableCooldown: 0.04
+  cableDetachRadius: 0.95
+  postDetachGlideSpeed: 9.5
+  postDetachGlideDuration: 0.09
+  cableTrailingMaxAge: 2.6
+  cableMaxDualFlightDist: 38
   oppositeCancelDot: -0.92
-  blockedDetachSeconds: 0.09
+  blockedDetachSeconds: 0.14
   maxEnergy: 100
   energyRegenPerSec: 5
   baseBonusRegenPerSec: 25

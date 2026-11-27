@@ -84,5 +84,84 @@ namespace Stickman.Tests
                 }
             }
         }
+
+        [Test]
+        public void AllTurretsHavePassableWallAndBorderClearance()
+        {
+            void CheckTurrets(Vector2[] turrets, string team)
+            {
+                for (int i = 0; i < turrets.Length; i++)
+                {
+                    Vector2 c = turrets[i];
+                    float minWallDist = float.MaxValue;
+                    for (int w = 0; w < ArenaLayoutData.Walls.Length; w++)
+                    {
+                        Vector2[] poly = ArenaLayoutData.Walls[w];
+                        for (int k = 0; k < poly.Length; k++)
+                        {
+                            float d = PointToSegmentDist(c, poly[k], poly[(k + 1) % poly.Length]);
+                            if (d < minWallDist) minWallDist = d;
+                        }
+                    }
+
+                    float wallGap = minWallDist - ArenaLayoutData.TurretRadius;
+                    float borderGap = ArenaLayoutData.HalfExtent - Mathf.Max(Mathf.Abs(c.x), Mathf.Abs(c.y)) - ArenaLayoutData.TurretRadius;
+                    Assert.That(wallGap, Is.GreaterThanOrEqualTo(1.40f), $"{team}_{i} wall gap {wallGap:0.00}");
+                    Assert.That(borderGap, Is.GreaterThanOrEqualTo(1.40f), $"{team}_{i} border gap {borderGap:0.00}");
+                }
+            }
+
+            CheckTurrets(ArenaLayoutData.BlueTurrets, "BlueTurret");
+            CheckTurrets(ArenaLayoutData.RedTurrets, "RedTurret");
+
+            for (int i = 0; i < ArenaLayoutData.Teleports.Length; i++)
+            {
+                Vector2 p = ArenaLayoutData.Teleports[i].Pos;
+                Assert.That(Vector2.Distance(p, ArenaLayoutData.BlueNexus), Is.GreaterThanOrEqualTo(ArenaLayoutData.NexusRadius + 0.5f));
+                Assert.That(Vector2.Distance(p, ArenaLayoutData.RedNexus), Is.GreaterThanOrEqualTo(ArenaLayoutData.NexusRadius + 0.5f));
+                for (int t = 0; t < ArenaLayoutData.BlueTurrets.Length; t++)
+                {
+                    Assert.That(Vector2.Distance(p, ArenaLayoutData.BlueTurrets[t]), Is.GreaterThanOrEqualTo(ArenaLayoutData.TurretRadius + 0.5f));
+                    Assert.That(Vector2.Distance(p, ArenaLayoutData.RedTurrets[t]), Is.GreaterThanOrEqualTo(ArenaLayoutData.TurretRadius + 0.5f));
+                }
+            }
+        }
+
+        [Test]
+        public void DepenetrationNeverTrapsHeroAtCornersOrInsideObstacles()
+        {
+            float heroR = 0.45f;
+            Vector2[] probes =
+            {
+                new Vector2(-59.5f, -59.5f),
+                new Vector2(59.5f, 59.5f),
+                new Vector2(-59.5f, 59.5f),
+                new Vector2(59.5f, -59.5f),
+                ArenaLayoutData.BlueNexus,
+                ArenaLayoutData.BlueTurrets[5],
+                ArenaLayoutData.Walls[0][0]
+            };
+
+            for (int i = 0; i < probes.Length; i++)
+            {
+                Vector2 res = ArenaCollisionMath.ResolveDepenetrationXZ(probes[i], heroR);
+                Assert.That(Mathf.Abs(res.x), Is.LessThanOrEqualTo(59.05f), $"Corner/probe {i} x={res.x}");
+                Assert.That(Mathf.Abs(res.y), Is.LessThanOrEqualTo(59.05f), $"Corner/probe {i} y={res.y}");
+                Assert.That(Vector2.Distance(res, ArenaLayoutData.BlueNexus), Is.GreaterThanOrEqualTo(ArenaLayoutData.NexusRadius + heroR - 0.01f));
+                Assert.That(Vector2.Distance(res, ArenaLayoutData.BlueTurrets[5]), Is.GreaterThanOrEqualTo(ArenaLayoutData.TurretRadius + heroR - 0.01f));
+                for (int w = 0; w < ArenaLayoutData.Walls.Length; w++)
+                {
+                    Assert.That(PolygonMeshBuilder.ContainsPoint(ArenaLayoutData.Walls[w], res), Is.False, $"Probe {i} stuck inside wall {w}");
+                }
+            }
+        }
+
+        static float PointToSegmentDist(Vector2 p, Vector2 a, Vector2 b)
+        {
+            Vector2 ab = b - a;
+            float l2 = ab.sqrMagnitude;
+            float t = l2 > 1e-9f ? Mathf.Clamp01(Vector2.Dot(p - a, ab) / l2) : 0f;
+            return Vector2.Distance(p, a + t * ab);
+        }
     }
 }

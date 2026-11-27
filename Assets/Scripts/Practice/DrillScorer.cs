@@ -47,11 +47,11 @@ namespace Stickman.Practice
             switch (diff)
             {
                 case DrillDifficulty.Easy:
-                    minDist = 4.5f; maxDist = 11.5f; break;
+                    minDist = 6.0f; maxDist = 14.0f; break;
                 case DrillDifficulty.Hard:
-                    minDist = 9.0f; maxDist = 15.0f; break;
+                    minDist = 12.0f; maxDist = 25.0f; break;
                 default:
-                    minDist = 6.0f; maxDist = 13.5f; break;
+                    minDist = 9.0f; maxDist = 19.0f; break;
             }
         }
 
