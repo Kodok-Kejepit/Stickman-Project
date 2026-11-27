@@ -1,0 +1,107 @@
+# GameCI: run the EditMode tests, then build Android, Linux64 and Windows on every push to main (and on demand).
+# Secrets: UNITY_LICENSE (contents of Unity_lic.ulf), UNITY_EMAIL, UNITY_PASSWORD.
+# Every job is skipped until the Unity project exists (ProjectSettings/ProjectVersion.txt).
+name: Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Check project
+    runs-on: ubuntu-latest
+    outputs:
+      exists: ${{ steps.p.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: p
+        run: |
+          if [ -f ProjectSettings/ProjectVersion.txt ]; then echo "exists=true" >> "$GITHUB_OUTPUT"; else echo "exists=false" >> "$GITHUB_OUTPUT"; echo "No Unity project yet, skipping."; fi
+
+  test:
+    name: Tests (EditMode)
+    needs: check
+    if: needs.check.outputs.exists == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-test-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-test-
+
+      # v4.3.2, not v4: v4.4.0 loads the .ulf directly and Unity 6 rejects it ("TimeStamp validation failed").
+      - uses: game-ci/unity-test-runner@v4.3.2
+        id: tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          testMode: editmode
+          customImage: unityci/editor:ubuntu-6000.3.29f1-base-4
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: TestResults
+          path: ${{ steps.tests.outputs.artifactsPath }}
+          retention-days: 14
+
+  build:
+    name: Build ${{ matrix.targetPlatform }}
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - targetPlatform: Android
+            image: android
+          - targetPlatform: StandaloneLinux64
+            image: linux-il2cpp
+          - targetPlatform: StandaloneWindows64
+            image: windows-mono
+    steps:
+      - name: Free disk space (Android)
+        if: matrix.targetPlatform == 'Android'
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: false
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ matrix.targetPlatform }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-${{ matrix.targetPlatform }}-
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: ${{ matrix.targetPlatform }}
+          buildName: StickmanProject
+          # unity-builder v4 looks for image revision 3, which does not exist for Unity 6000.3.29f1.
+          customImage: unityci/editor:ubuntu-6000.3.29f1-${{ matrix.image }}-4
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: StickmanProject-${{ matrix.targetPlatform }}
+          path: build/${{ matrix.targetPlatform }}
+          retention-days: 14
