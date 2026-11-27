@@ -17,3 +17,8 @@ Catat keputusan teknis dan alasannya (satu baris per keputusan, terbaru di bawah
 - Harness verifikasi `-autoshot <folder>` dimulai di M0 (`Core.AutoShot`): screenshot `boot.png` + `diag.txt` + `errors.txt`.
 - CI sementara memakai remote `build` (`Kodok-Kejepit/aethvirse`, branch `stickman`) sampai secret `UNITY_EMAIL`/`UNITY_PASSWORD` dipasang di `Stickman-Project`; M0 lulus penuh di run `45930303372`.
 - M1+ arena memakai layout 3-lane MOBA (base, 3 lane, sungai + 2 pit bulan sabit, 4 kuadran dinding hutan + dinding buff bentuk C, penanda turret, bush non-blocking) yang dibangun manual dari graybox mesh/collider tanpa aset ekstrak, agar latihan straight cable akurat.
+- Arsitektur gameplay Phase 1 berjalan sinkron di `Update` (`HeroMotor` swept-capsule) diikuti `LateUpdate` zero-lag `MobaCamera` sehingga bebas jitter di 30–120 FPS (terukur `0.00 px` flight jitter).
+- Mesin kabel `CableEngine` mendukung hingga 3 kait aktif berjendela waktu 3 slot dengan penjumlahan vektor lurus, handoff rantai, dan *chord-pass detach* supaya dual straight cable tidak overshoot atau patah arah mendadak.
+- Geometri 40 dinding non-konveks diekstrusi langsung oleh `ArenaBuilder` menjadi `MeshCollider` statis (layer Walls) di `Assets/Data/ArenaMeshes.asset` dengan layout 3-lane MOBA akurat.
+- UI sentuh Android memakai `CanvasScaler` (`ScaleWithScreenSize`, `matchWidthOrHeight = 1.0f` orientasi landscape), `CameraPanPad` pada layer raycast terbawah untuk menggeser kamera, serta minimap hidup dengan dukungan *peek-pan*.
+- Matrix CI sementara berfokus pada Android dan Linux64 (untuk verifikasi otomatis `-selftest` dan `-autoshot`), menghapus target Windows64 agar iterasi build lebih cepat.
