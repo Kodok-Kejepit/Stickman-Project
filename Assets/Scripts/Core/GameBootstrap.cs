@@ -1,35 +1,49 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Stickman.Core
 {
     /// <summary>
-    /// First component to run (lives in Boot.unity). Applies the frame-rate policy and starts the
-    /// verification harness when the player is launched with <c>-autoshot &lt;folder&gt;</c>.
+    /// First component to run (lives in Boot.unity). Applies saved settings + frame-rate policy,
+    /// launches verification harnesses (<c>-selftest</c>, <c>-autoshot</c>), and loads the Practice scene.
     /// </summary>
     [DefaultExecutionOrder(-1000)]
     public sealed class GameBootstrap : MonoBehaviour
     {
-        [Tooltip("0 = follow the display refresh rate. Otherwise 60 / 90 / 120.")]
-        [SerializeField] int preferredFrameRate;
-
         void Awake()
         {
-            ApplyFrameRate();
+            SettingsData settings = SettingsStore.Load();
+            ApplyFrameRate(settings);
 
-            string shotFolder = CommandLine.Value(System.Environment.GetCommandLineArgs(), "-autoshot");
-            if (!string.IsNullOrEmpty(shotFolder))
+            string[] args = System.Environment.GetCommandLineArgs();
+            string selfTestFolder = CommandLine.Value(args, "-selftest");
+            string shotFolder = CommandLine.Value(args, "-autoshot");
+
+            if (!string.IsNullOrEmpty(selfTestFolder))
             {
-                var shot = gameObject.AddComponent<AutoShot>();
-                shot.Begin(shotFolder);
+                DontDestroyOnLoad(gameObject);
+                gameObject.AddComponent<SelfTest>().Begin(selfTestFolder);
+            }
+            else if (!string.IsNullOrEmpty(shotFolder))
+            {
+                DontDestroyOnLoad(gameObject);
+                gameObject.AddComponent<AutoShot>().Begin(shotFolder);
             }
         }
 
-        void ApplyFrameRate()
+        void Start()
         {
-            // vSync off so targetFrameRate is honoured (required on mobile, harmless on desktop).
+            if (SceneManager.GetActiveScene().name == "Boot" && Application.CanStreamedLevelBeLoaded("Practice"))
+            {
+                SceneManager.LoadScene("Practice");
+            }
+        }
+
+        static void ApplyFrameRate(SettingsData settings)
+        {
             QualitySettings.vSyncCount = 0;
             double hz = Screen.currentResolution.refreshRateRatio.value;
-            Application.targetFrameRate = FrameRate.ChooseTarget(hz, preferredFrameRate);
+            Application.targetFrameRate = FrameRate.ChooseTarget(hz, settings != null ? settings.targetFps : 0);
         }
     }
 }
