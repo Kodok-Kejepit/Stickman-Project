@@ -129,6 +129,7 @@ namespace Stickman.Core
             // 6. Camera Pan moves camera and returns cleanly when released
             var mobaCam = FindFirstObjectByType<MobaCamera>();
             hero.TeleportHero(new Vector3(0f, 0f, 0f));
+            mobaCam.SnapNow();
             yield return null;
             Vector3 camBase = mobaCam.transform.position;
             input.SetCameraPan(new Vector3(12f, 0f, 10f), true);
