@@ -1,11 +1,13 @@
 # GameCI: run the EditMode tests, then build Android, Linux64 and Windows on every push to main (and on demand).
 # Secrets: UNITY_LICENSE (contents of Unity_lic.ulf), UNITY_EMAIL, UNITY_PASSWORD.
 # Every job is skipped until the Unity project exists (ProjectSettings/ProjectVersion.txt).
+# Temporary: builds run in the AETHVIRSE repo on its `stickman` branch (that repo already holds the Unity
+# secrets). Cache keys are prefixed with Stickman- so they never mix with AETHVIRSE caches.
 name: Build
 
 on:
   push:
-    branches: [main]
+    branches: [main, stickman]
   workflow_dispatch:
 
 jobs:
@@ -33,9 +35,9 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: Library
-          key: Library-test-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          key: Stickman-Library-test-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
-            Library-test-
+            Stickman-Library-test-
 
       # v4.3.2, not v4: v4.4.0 loads the .ulf directly and Unity 6 rejects it ("TimeStamp validation failed").
       - uses: game-ci/unity-test-runner@v4.3.2
@@ -85,9 +87,9 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: Library
-          key: Library-${{ matrix.targetPlatform }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          key: Stickman-Library-${{ matrix.targetPlatform }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
-            Library-${{ matrix.targetPlatform }}-
+            Stickman-Library-${{ matrix.targetPlatform }}-
 
       - uses: game-ci/unity-builder@v4
         env:

@@ -56,10 +56,13 @@
 - Tidak boleh ada: email owner, password, token, isi `Unity_lic.ulf`, API key, path pribadi yang sensitif.
 - Secret CI (`UNITY_LICENSE`, `UNITY_EMAIL`, `UNITY_PASSWORD`) **tidak boleh dicetak** ke terminal, log, file, atau
   commit. Jangan `echo`, jangan `gh secret` lalu tampilkan nilainya.
-- **Hak cipta:** JANGAN memasukkan aset, nama, logo, ikon, suara, musik, atau peta dari Mobile Legends / Moonton
-  (atau game lain). Hero adalah **stickman original** dengan nama original. Arena dirancang sendiri (bukan salinan
-  peta MLBB). Yang boleh ditiru hanya **mekanik / rasa main** (kabel, kamera, kontrol). Di dalam game dan di README,
-  jangan sebut "Fanny" / "Mobile Legends" sebagai nama produk; cukup "cable hero practice".
+- **Pemakaian:** ini alat latihan **pribadi** owner (tidak dirilis, tidak dipublikasikan). Repo publik hanya
+  dipakai untuk build CI dan akan dihapus owner setelah selesai.
+- **Boleh:** meniru mekanik, angka rasa main, kamera, kontrol, dan tata letak umum MOBA (3 lane, hutan, sungai,
+  dinding hutan tebal/tipis, celah, jarak dinding realistis) supaya latihannya semirip mungkin. Menyebut "Fanny" /
+  MLBB di dokumen sebagai acuan juga boleh.
+- **Tetap jangan:** memasukkan aset hasil ekstrak dari game (model, tekstur, ikon, suara, musik, logo) ke repo.
+  Semua grafis dibuat sendiri (graybox / stickman).
 
 ---
 
@@ -67,12 +70,22 @@
 
 - **JANGAN build di laptop.** Laptop owner RAM-nya kecil (±7 GB) dan dipakai untuk hal lain. Dilarang:
   `Unity -batchmode -buildTarget ...`, `BuildPipeline.BuildPlayer` lokal, export APK/EXE lokal, install Android SDK lokal.
-- **Build = push ke `main`.** GameCI (`.github/workflows/build.yml`) menjalankan tes EditMode lalu build:
-  Android (APK), StandaloneLinux64, StandaloneWindows64.
-  - Manual: `gh workflow run build.yml -R Kodok-Kejepit/Stickman-Project --ref main`
-  - Pantau: `gh run list -R Kodok-Kejepit/Stickman-Project -L 3`
-  - Log gagal: `gh run view <id> -R Kodok-Kejepit/Stickman-Project --log-failed`
-  - Unduh hasil: `gh run download <id> -R Kodok-Kejepit/Stickman-Project -n StickmanProject-Android -D <folder>`
+- **SEMENTARA, build di repo AETHVIRSE, branch `stickman`.** Repo `Stickman-Project` belum punya secret
+  `UNITY_EMAIL`/`UNITY_PASSWORD`, dan owner belum sempat memasangnya. Repo `Kodok-Kejepit/aethvirse` sudah punya
+  ketiganya. Maka:
+  - Remote `build` sudah ditambahkan: `git@github.com:Kodok-Kejepit/aethvirse.git`.
+  - Build = **push ke branch `stickman` di remote `build`**: `git push build <branch-lokal>:stickman`
+    (mis. `git push build feat/m0-setup:stickman` atau `git push build main:stickman`).
+    Workflow di branch itu sendiri (`.github/workflows/build.yml`) yang jalan; cache-nya berawalan `Stickman-`.
+  - Pantau: `gh run list -R Kodok-Kejepit/aethvirse -b stickman -L 3`
+  - Log gagal: `gh run view <id> -R Kodok-Kejepit/aethvirse --log-failed`
+  - Unduh: `gh run download <id> -R Kodok-Kejepit/aethvirse -n StickmanProject-Android -D <folder>`
+  - **DILARANG KERAS** push ke branch lain di repo aethvirse (terutama `main`), membuat tag di sana, mengubah
+    secret/setting-nya, atau menghapus apa pun di sana. Hanya branch `stickman`. Force-push ke `stickman` boleh
+    kalau memang perlu.
+  - Kode tetap juga di-push ke `origin` (Stickman-Project) seperti biasa sebagai rumah utamanya.
+  - Kalau suatu hari owner sudah memasang secret di Stickman-Project, build kembali ke push `main` di `origin`
+    (`gh ... -R Kodok-Kejepit/Stickman-Project`) dan branch `stickman` di aethvirse boleh dihapus **atas izin owner**.
 - Image Docker dipatok `unityci/editor:ubuntu-6000.3.29f1-<platform>-4` lewat `customImage`
   (`unity-builder@v4` sendiri mencari revisi `-3` yang TIDAK ADA untuk versi ini). `unity-test-runner` dipatok
   **v4.3.2** (v4.4.0 gagal aktivasi lisensi di Unity 6). **Jangan diubah** kecuali tahu persis alasannya.
@@ -118,7 +131,7 @@ systemd-run --user --scope -q -p MemoryMax=3200M -p MemorySwapMax=0 \
 ## 4. Batas ruang kerja (WAJIB)
 
 - Kerja HANYA di `~/Project/Stickman-Project`.
-- **JANGAN menyentuh** `~/Project/AETHVIRSE-Project` (proyek lain milik owner) atau folder proyek lain — boleh
+- **JANGAN menyentuh** `~/Project/AETHVIRSE-Project` (folder lokal) (proyek lain milik owner) atau folder proyek lain — boleh
   DIBACA sebagai contoh (mis. workflow CI), tidak boleh diubah.
 - Jangan install paket sistem (`apt`, `pip install --user`, dll.) tanpa izin owner.
 - Jangan menghapus file yang tidak kamu buat. Sebelum menimpa/menghapus, lihat dulu isinya.
@@ -213,6 +226,6 @@ magenta, UI bertumpuk). Maka:
 
 ## 8. Yang DILARANG (ringkas)
 
-- Build lokal · force-push `main` · jejak AI di commit · email/secret di repo · aset/nama MLBB · package tanpa izin ·
+- Build lokal · force-push `main` · push ke repo aethvirse selain branch `stickman` · jejak AI di commit · email/secret di repo · aset hasil ekstrak MLBB · package tanpa izin ·
   menyentuh folder proyek lain · `rclone sync/delete` · perintah tanpa `timeout` / tanpa `< /dev/null` ·
   bilang "sudah dites" padahal belum · mengganti versi Unity.
