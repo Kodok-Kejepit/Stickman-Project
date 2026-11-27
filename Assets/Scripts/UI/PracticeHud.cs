@@ -58,6 +58,7 @@ namespace Stickman.UI
         SkillButton _basicBtn;
         SkillButton _spinBtn;
         SkillButton _ultBtn;
+        RectTransform _cancelZoneRt;
         RectTransform[] _layoutTargets;
         Vector2[] _layoutBasePos;
 
@@ -301,41 +302,42 @@ namespace Stickman.UI
             var jzImg = joyZone.AddComponent<Image>();
             jzImg.color = new Color(0f, 0f, 0f, 0f);
 
-            Vector2 joyBase = new Vector2(210f, 195f);
-            var joyRing = CreateCircleControl("JoystickRing", trt, Vector2.zero, Vector2.zero, joyBase, 220f, new Color(1f, 1f, 1f, 0.25f));
-            var joyKnob = CreateCircleControl("JoystickKnob", joyRing, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, 94f, new Color(0.32f, 0.88f, 1f, 0.65f));
+            Vector2 joyBase = new Vector2(225f, 205f);
+            var joyRing = CreateCircleControl("JoystickRing", trt, Vector2.zero, Vector2.zero, joyBase, 235f, new Color(1f, 1f, 1f, 0.25f));
+            var joyKnob = CreateCircleControl("JoystickKnob", joyRing, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, 100f, new Color(0.32f, 0.88f, 1f, 0.65f));
             joyKnob.pivot = new Vector2(0.5f, 0.5f);
             joyRing.GetComponent<Image>().sprite = UiSprites.Ring;
             joyRing.GetComponent<Image>().raycastTarget = false;
             joyKnob.GetComponent<Image>().raycastTarget = false;
 
             _joystick = joyZone.AddComponent<TouchJoystick>();
-            _joystick.Initialize(trt, joyRing, joyKnob, joyBase, 105f);
+            _joystick.Initialize(trt, joyRing, joyKnob, joyBase, 112f);
 
-            // Right-hand MOBA skill arc
-            Vector2 basicBase = new Vector2(-135f, 130f);
-            Vector2 spinBase = new Vector2(-325f, 115f);
-            Vector2 cableBase = new Vector2(-265f, 275f);
-            Vector2 ultBase = new Vector2(-115f, 325f);
+            // Right-hand MOBA skill arc (larger base button sizes for thumb ergonomics)
+            Vector2 basicBase = new Vector2(-145f, 138f);
+            Vector2 spinBase = new Vector2(-348f, 122f);
+            Vector2 cableBase = new Vector2(-286f, 295f);
+            Vector2 ultBase = new Vector2(-120f, 348f);
 
-            var basicRt = CreateSkillButton("BasicBtn", trt, basicBase, 154f, new Color(0.86f, 0.36f, 0.24f, 0.84f), "ATK", out _basicBtn);
-            var spinRt = CreateSkillButton("SpinBtn", trt, spinBase, 126f, new Color(0.22f, 0.62f, 0.88f, 0.84f), "S1", out _spinBtn);
-            var ultRt = CreateSkillButton("UltBtn", trt, ultBase, 126f, new Color(0.84f, 0.58f, 0.16f, 0.84f), "ULT", out _ultBtn);
+            var basicRt = CreateSkillButton("BasicBtn", trt, basicBase, 168f, new Color(0.86f, 0.36f, 0.24f, 0.84f), "ATK", out _basicBtn);
+            var spinRt = CreateSkillButton("SpinBtn", trt, spinBase, 138f, new Color(0.22f, 0.62f, 0.88f, 0.84f), "S1", out _spinBtn);
+            var ultRt = CreateSkillButton("UltBtn", trt, ultBase, 138f, new Color(0.84f, 0.58f, 0.16f, 0.84f), "ULT", out _ultBtn);
 
             // Skill 2 Cable AimStick + Cancel Zone
-            var cableRt = CreateCircleControl("CableBtn", trt, new Vector2(1f, 0f), new Vector2(1f, 0f), cableBase, 152f, new Color(0.14f, 0.62f, 0.92f, 0.85f));
-            var cableKnob = CreateCircleControl("Knob", cableRt, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, 66f, new Color(0.85f, 0.96f, 1f, 0.85f));
+            var cableRt = CreateCircleControl("CableBtn", trt, new Vector2(1f, 0f), new Vector2(1f, 0f), cableBase, 168f, new Color(0.14f, 0.62f, 0.92f, 0.85f));
+            var cableKnob = CreateCircleControl("Knob", cableRt, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, 72f, new Color(0.85f, 0.96f, 1f, 0.85f));
             cableKnob.pivot = new Vector2(0.5f, 0.5f);
             cableKnob.GetComponent<Image>().raycastTarget = false;
 
             var cLabel = new GameObject("Label").AddComponent<Text>();
             cLabel.transform.SetParent(cableRt, false);
-            cLabel.font = _font; cLabel.text = "CABLE"; cLabel.fontSize = 22; cLabel.fontStyle = FontStyle.Bold;
+            cLabel.font = _font; cLabel.text = "CABLE"; cLabel.fontSize = 24; cLabel.fontStyle = FontStyle.Bold;
             cLabel.alignment = TextAnchor.MiddleCenter; cLabel.color = Color.white; cLabel.raycastTarget = false;
             cLabel.rectTransform.anchorMin = Vector2.zero; cLabel.rectTransform.anchorMax = Vector2.one;
             cLabel.rectTransform.offsetMin = cLabel.rectTransform.offsetMax = Vector2.zero;
 
-            var cancelRt = CreateCircleControl("CancelZone", trt, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-125f, 470f), 116f, new Color(0.45f, 0.16f, 0.18f, 0.72f));
+            var cancelRt = CreateCircleControl("CancelZone", trt, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-128f, 500f), 126f, new Color(0.45f, 0.16f, 0.18f, 0.72f));
+            _cancelZoneRt = cancelRt;
             var cancelTxt = new GameObject("Label").AddComponent<Text>();
             cancelTxt.transform.SetParent(cancelRt, false);
             cancelTxt.font = _font; cancelTxt.text = "X"; cancelTxt.fontSize = 30; cancelTxt.fontStyle = FontStyle.Bold;
@@ -426,13 +428,18 @@ namespace Stickman.UI
             bool showTouch = inputRouter != null && inputRouter.TouchUiEnabled;
             if (_touchRoot != null) _touchRoot.SetActive(showTouch);
 
+            float globalBtn = Mathf.Clamp(s.hudButtonScale <= 0f ? 1f : s.hudButtonScale, 0.75f, 1.80f);
             if (_layoutTargets != null && _layoutBasePos != null)
             {
-                _joystick?.SetRestAnchoredPos(_layoutBasePos[0] + s.joystickOffset, s.joystickScale);
-                ApplyButtonLayout(1, _layoutBasePos[1] + s.basicOffset, s.basicScale);
-                ApplyButtonLayout(2, _layoutBasePos[2] + s.spinOffset, s.spinScale);
-                ApplyButtonLayout(3, _layoutBasePos[3] + s.cableOffset, s.cableScale);
-                ApplyButtonLayout(4, _layoutBasePos[4] + s.ultOffset, s.ultScale);
+                _joystick?.SetRestAnchoredPos(_layoutBasePos[0] + s.joystickOffset, Mathf.Clamp(s.joystickScale * globalBtn, 0.55f, 2.60f));
+                ApplyButtonLayout(1, _layoutBasePos[1] + s.basicOffset, Mathf.Clamp(s.basicScale * globalBtn, 0.55f, 2.60f));
+                ApplyButtonLayout(2, _layoutBasePos[2] + s.spinOffset, Mathf.Clamp(s.spinScale * globalBtn, 0.55f, 2.60f));
+                ApplyButtonLayout(3, _layoutBasePos[3] + s.cableOffset, Mathf.Clamp(s.cableScale * globalBtn, 0.55f, 2.60f));
+                ApplyButtonLayout(4, _layoutBasePos[4] + s.ultOffset, Mathf.Clamp(s.ultScale * globalBtn, 0.55f, 2.60f));
+            }
+            if (_cancelZoneRt != null)
+            {
+                _cancelZoneRt.localScale = Vector3.one * globalBtn;
             }
         }
 

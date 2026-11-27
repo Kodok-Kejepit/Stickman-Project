@@ -16,8 +16,8 @@ namespace Stickman.Practice
         public const float NexusRadius = 3.50f;
         public const float NexusHeight = 4.8f;
 
-        public static readonly Vector2 BlueNexus = new Vector2(-49.20f, -45.60f);
-        public static readonly Vector2 RedNexus = new Vector2(49.20f, 45.60f);
+        public static readonly Vector2 BlueNexus = new Vector2(-46.50f, -46.50f);
+        public static readonly Vector2 RedNexus = new Vector2(46.50f, 46.50f);
         public const float BaseHealingRadius = 11.5f;
 
         public static readonly Vector2[][] Walls = new Vector2[][]
@@ -27,8 +27,8 @@ namespace Stickman.Practice
             new Vector2[] { new Vector2(35.15f, -41.60f), new Vector2(31.53f, -39.11f), new Vector2(28.53f, -38.49f), new Vector2(28.03f, -38.86f), new Vector2(28.66f, -40.48f), new Vector2(28.16f, -42.47f), new Vector2(26.78f, -43.71f), new Vector2(22.16f, -44.58f), new Vector2(21.91f, -45.70f), new Vector2(23.04f, -46.20f), new Vector2(31.53f, -46.20f), new Vector2(33.65f, -45.33f), new Vector2(35.03f, -43.46f) },
             new Vector2[] { new Vector2(-29.16f, -36.25f), new Vector2(-30.03f, -37.24f), new Vector2(-30.03f, -38.11f), new Vector2(-28.78f, -39.36f), new Vector2(-26.41f, -42.96f), new Vector2(-25.41f, -46.32f), new Vector2(-24.66f, -46.57f), new Vector2(-22.66f, -46.45f), new Vector2(-24.16f, -42.09f), new Vector2(-26.16f, -38.49f), new Vector2(-27.91f, -36.12f) },
             new Vector2[] { new Vector2(-18.92f, -37.49f), new Vector2(-19.04f, -38.86f), new Vector2(-18.67f, -39.36f), new Vector2(-17.67f, -41.60f), new Vector2(-17.29f, -41.97f), new Vector2(-16.67f, -42.22f), new Vector2(-15.92f, -41.97f), new Vector2(-14.80f, -40.60f), new Vector2(-14.67f, -40.10f), new Vector2(-14.80f, -38.74f), new Vector2(-15.67f, -37.87f), new Vector2(-16.80f, -37.37f), new Vector2(-18.67f, -37.37f) },
-            new Vector2[] { new Vector2(3.56f, -35.50f), new Vector2(3.68f, -36.87f), new Vector2(5.18f, -38.36f), new Vector2(6.43f, -38.61f), new Vector2(7.55f, -38.11f), new Vector2(9.05f, -39.11f), new Vector2(10.68f, -38.61f), new Vector2(12.92f, -35.50f), new Vector2(15.55f, -35.25f), new Vector2(16.42f, -36.12f), new Vector2(17.04f, -38.49f), new Vector2(18.42f, -37.37f), new Vector2(17.92f, -35.13f), new Vector2(14.42f, -32.27f), new Vector2(12.55f, -31.65f), new Vector2(10.43f, -31.77f), new Vector2(8.30f, -34.63f), new Vector2(5.93f, -33.39f), new Vector2(4.18f, -34.51f) },
-            new Vector2[] { new Vector2(4.93f, -23.44f), new Vector2(3.68f, -23.69f), new Vector2(2.43f, -26.30f), new Vector2(2.93f, -28.79f), new Vector2(2.19f, -29.78f), new Vector2(-0.44f, -30.53f), new Vector2(-2.31f, -28.41f), new Vector2(-5.68f, -28.17f), new Vector2(-8.80f, -29.78f), new Vector2(-10.05f, -32.15f), new Vector2(-8.55f, -31.52f), new Vector2(-8.05f, -33.26f), new Vector2(-5.56f, -32.64f), new Vector2(-4.31f, -31.52f), new Vector2(-2.93f, -31.77f), new Vector2(-2.06f, -33.89f), new Vector2(-4.06f, -37.87f), new Vector2(-1.69f, -38.11f), new Vector2(0.19f, -37.49f), new Vector2(2.19f, -35.50f), new Vector2(3.56f, -30.90f), new Vector2(5.81f, -27.17f) },
+            new Vector2[] { new Vector2(9.60f, -37.20f), new Vector2(10.80f, -38.70f), new Vector2(12.80f, -35.80f), new Vector2(15.40f, -35.30f), new Vector2(16.50f, -36.20f), new Vector2(17.20f, -38.40f), new Vector2(18.40f, -37.20f), new Vector2(17.90f, -35.00f), new Vector2(14.50f, -32.20f), new Vector2(12.50f, -31.70f), new Vector2(10.40f, -32.10f), new Vector2(9.30f, -34.80f) },
+            new Vector2[] { new Vector2(5.20f, -23.60f), new Vector2(3.80f, -23.80f), new Vector2(2.40f, -26.40f), new Vector2(2.20f, -29.40f), new Vector2(-0.50f, -30.20f), new Vector2(-2.60f, -28.40f), new Vector2(-5.80f, -28.20f), new Vector2(-8.80f, -30.00f), new Vector2(-9.60f, -32.00f), new Vector2(-7.20f, -32.20f), new Vector2(-4.20f, -31.20f), new Vector2(-2.20f, -32.40f), new Vector2(-2.20f, -35.20f), new Vector2(-3.80f, -37.80f), new Vector2(-1.50f, -38.10f), new Vector2(0.60f, -37.20f), new Vector2(2.40f, -35.00f), new Vector2(3.80f, -30.80f), new Vector2(5.70f, -26.80f) },
             new Vector2[] { new Vector2(-17.42f, -25.68f), new Vector2(-18.04f, -25.43f), new Vector2(-18.79f, -25.55f), new Vector2(-21.17f, -27.67f), new Vector2(-23.29f, -30.28f), new Vector2(-23.29f, -31.27f), new Vector2(-21.91f, -32.77f), new Vector2(-19.54f, -33.39f), new Vector2(-17.92f, -33.14f), new Vector2(-17.17f, -32.52f), new Vector2(-16.30f, -30.78f), new Vector2(-15.92f, -28.04f), new Vector2(-16.17f, -26.80f) },
             new Vector2[] { new Vector2(-47.76f, -22.45f), new Vector2(-47.51f, -24.68f), new Vector2(-42.52f, -26.80f), new Vector2(-38.15f, -30.16f), new Vector2(-36.77f, -28.91f), new Vector2(-36.65f, -28.17f), new Vector2(-37.15f, -27.54f), new Vector2(-40.77f, -24.81f), new Vector2(-46.89f, -22.20f) },
             new Vector2[] { new Vector2(25.04f, -19.09f), new Vector2(24.16f, -19.46f), new Vector2(26.66f, -22.07f), new Vector2(27.53f, -24.06f), new Vector2(27.41f, -25.55f), new Vector2(26.16f, -27.17f), new Vector2(24.29f, -28.04f), new Vector2(22.91f, -27.92f), new Vector2(18.54f, -25.18f), new Vector2(19.67f, -28.17f), new Vector2(21.29f, -29.53f), new Vector2(23.41f, -30.28f), new Vector2(25.54f, -30.16f), new Vector2(27.41f, -29.28f), new Vector2(29.03f, -27.54f), new Vector2(29.78f, -25.18f), new Vector2(29.66f, -23.44f), new Vector2(28.66f, -21.33f), new Vector2(27.03f, -19.83f) },
@@ -55,13 +55,17 @@ namespace Stickman.Practice
             new Vector2[] { new Vector2(-46.14f, 29.53f), new Vector2(-46.39f, 22.94f), new Vector2(-45.27f, 20.58f), new Vector2(-44.14f, 20.21f), new Vector2(-40.27f, 20.58f), new Vector2(-38.15f, 21.45f), new Vector2(-36.02f, 23.07f), new Vector2(-36.15f, 24.19f), new Vector2(-37.15f, 24.93f), new Vector2(-40.77f, 25.06f), new Vector2(-41.52f, 25.68f), new Vector2(-42.14f, 27.17f), new Vector2(-42.39f, 29.78f), new Vector2(-42.89f, 30.40f), new Vector2(-44.64f, 30.78f) },
             new Vector2[] { new Vector2(35.28f, 28.54f), new Vector2(35.78f, 27.67f), new Vector2(38.90f, 25.18f), new Vector2(45.02f, 22.32f), new Vector2(46.26f, 22.32f), new Vector2(46.26f, 24.56f), new Vector2(41.39f, 26.55f), new Vector2(36.90f, 29.78f), new Vector2(36.02f, 29.53f) },
             new Vector2[] { new Vector2(22.41f, 32.64f), new Vector2(20.92f, 33.51f), new Vector2(18.79f, 33.64f), new Vector2(17.92f, 33.26f), new Vector2(16.67f, 32.27f), new Vector2(16.55f, 28.91f), new Vector2(16.80f, 26.67f), new Vector2(17.92f, 26.55f), new Vector2(19.29f, 27.30f), new Vector2(22.16f, 30.28f), new Vector2(22.41f, 30.90f) },
-            new Vector2[] { new Vector2(3.93f, 37.99f), new Vector2(1.19f, 38.36f), new Vector2(-3.31f, 34.38f), new Vector2(-6.31f, 28.29f), new Vector2(-5.06f, 21.70f), new Vector2(-4.18f, 22.32f), new Vector2(-3.43f, 26.18f), new Vector2(-0.69f, 25.93f), new Vector2(0.81f, 26.92f), new Vector2(-2.19f, 26.55f), new Vector2(-3.06f, 27.17f), new Vector2(-3.68f, 29.28f), new Vector2(-2.56f, 30.90f), new Vector2(-0.56f, 31.03f), new Vector2(1.06f, 29.28f), new Vector2(4.06f, 29.28f), new Vector2(8.18f, 31.15f), new Vector2(7.93f, 33.39f), new Vector2(3.68f, 31.52f), new Vector2(1.44f, 32.02f), new Vector2(0.81f, 33.14f), new Vector2(1.19f, 35.38f), new Vector2(1.94f, 35.88f), new Vector2(2.31f, 35.13f) },
-            new Vector2[] { new Vector2(-4.06f, 36.50f), new Vector2(-6.43f, 38.74f), new Vector2(-7.30f, 38.74f), new Vector2(-8.55f, 37.74f), new Vector2(-10.18f, 39.11f), new Vector2(-12.05f, 37.74f), new Vector2(-12.42f, 36.75f), new Vector2(-13.92f, 35.88f), new Vector2(-15.30f, 36.25f), new Vector2(-16.30f, 37.24f), new Vector2(-18.79f, 36.87f), new Vector2(-18.29f, 34.63f), new Vector2(-16.92f, 33.26f), new Vector2(-13.67f, 31.65f), new Vector2(-11.43f, 31.90f), new Vector2(-9.18f, 35.01f), new Vector2(-7.43f, 33.64f), new Vector2(-6.06f, 33.76f), new Vector2(-4.31f, 35.50f) },
+            new Vector2[] { new Vector2(-5.20f, 23.60f), new Vector2(-3.80f, 23.80f), new Vector2(-2.40f, 26.40f), new Vector2(-2.20f, 29.40f), new Vector2(0.50f, 30.20f), new Vector2(2.60f, 28.40f), new Vector2(5.80f, 28.20f), new Vector2(8.80f, 30.00f), new Vector2(9.60f, 32.00f), new Vector2(7.20f, 32.20f), new Vector2(4.20f, 31.20f), new Vector2(2.20f, 32.40f), new Vector2(2.20f, 35.20f), new Vector2(3.80f, 37.80f), new Vector2(1.50f, 38.10f), new Vector2(-0.60f, 37.20f), new Vector2(-2.40f, 35.00f), new Vector2(-3.80f, 30.80f), new Vector2(-5.70f, 26.80f) },
+            new Vector2[] { new Vector2(-9.60f, 37.20f), new Vector2(-10.80f, 38.70f), new Vector2(-12.80f, 35.80f), new Vector2(-15.40f, 35.30f), new Vector2(-16.50f, 36.20f), new Vector2(-17.20f, 38.40f), new Vector2(-18.40f, 37.20f), new Vector2(-17.90f, 35.00f), new Vector2(-14.50f, 32.20f), new Vector2(-12.50f, 31.70f), new Vector2(-10.40f, 32.10f), new Vector2(-9.30f, 34.80f) },
             new Vector2[] { new Vector2(16.17f, 43.21f), new Vector2(14.67f, 41.84f), new Vector2(14.17f, 41.10f), new Vector2(14.17f, 39.48f), new Vector2(14.42f, 38.49f), new Vector2(14.80f, 38.24f), new Vector2(14.92f, 37.74f), new Vector2(15.92f, 37.24f), new Vector2(18.42f, 37.24f), new Vector2(19.54f, 37.99f), new Vector2(19.54f, 38.98f), new Vector2(17.67f, 42.34f), new Vector2(17.17f, 42.59f), new Vector2(16.80f, 43.09f) },
             new Vector2[] { new Vector2(22.66f, 47.07f), new Vector2(22.41f, 46.45f), new Vector2(22.79f, 44.83f), new Vector2(24.41f, 40.48f), new Vector2(26.41f, 37.37f), new Vector2(28.16f, 35.50f), new Vector2(29.53f, 36.62f), new Vector2(29.41f, 37.37f), new Vector2(28.41f, 38.49f), new Vector2(26.41f, 41.97f), new Vector2(24.91f, 46.69f), new Vector2(24.16f, 47.07f) },
             new Vector2[] { new Vector2(-21.54f, 45.33f), new Vector2(-22.41f, 45.95f), new Vector2(-26.41f, 46.45f), new Vector2(-30.41f, 46.07f), new Vector2(-34.03f, 44.46f), new Vector2(-35.15f, 43.09f), new Vector2(-35.15f, 41.84f), new Vector2(-33.28f, 39.85f), new Vector2(-31.65f, 38.98f), new Vector2(-28.03f, 38.86f), new Vector2(-27.16f, 39.36f), new Vector2(-27.78f, 41.35f), new Vector2(-27.66f, 42.22f), new Vector2(-25.41f, 43.59f), new Vector2(-21.66f, 44.70f) },
             new Vector2[] { new Vector2(-1.31f, 43.59f), new Vector2(1.19f, 42.96f), new Vector2(8.18f, 43.09f), new Vector2(10.80f, 43.96f), new Vector2(11.93f, 44.95f), new Vector2(12.67f, 46.32f), new Vector2(12.30f, 46.57f), new Vector2(0.31f, 46.57f), new Vector2(-0.94f, 45.70f) },
             new Vector2[] { new Vector2(-16.17f, 45.82f), new Vector2(-15.80f, 44.33f), new Vector2(-14.92f, 43.71f), new Vector2(-7.80f, 44.33f), new Vector2(-6.56f, 45.08f), new Vector2(-6.56f, 45.82f), new Vector2(-6.93f, 46.07f), new Vector2(-15.80f, 46.07f) },
+            new Vector2[] { new Vector2(20.60f, -10.60f), new Vector2(21.40f, -12.10f), new Vector2(23.40f, -12.40f), new Vector2(24.90f, -11.30f), new Vector2(25.00f, -9.50f), new Vector2(23.90f, -8.30f), new Vector2(22.00f, -8.20f), new Vector2(20.70f, -9.20f) },
+            new Vector2[] { new Vector2(-20.60f, 10.60f), new Vector2(-21.40f, 12.10f), new Vector2(-23.40f, 12.40f), new Vector2(-24.90f, 11.30f), new Vector2(-25.00f, 9.50f), new Vector2(-23.90f, 8.30f), new Vector2(-22.00f, 8.20f), new Vector2(-20.70f, 9.20f) },
+            new Vector2[] { new Vector2(-60.00f, 60.00f), new Vector2(-60.00f, 41.00f), new Vector2(-41.00f, 60.00f) },
+            new Vector2[] { new Vector2(60.00f, -60.00f), new Vector2(60.00f, -41.00f), new Vector2(41.00f, -60.00f) },
         };
 
         public static readonly Vector2[][] Bushes = new Vector2[][]
@@ -106,12 +110,12 @@ namespace Stickman.Practice
 
         public static readonly Vector2[] BlueTurrets = new Vector2[]
         {
-            new Vector2(-51.60f, -27.60f), new Vector2(-55.20f, -10.80f), new Vector2(-55.80f, 27.00f), new Vector2(-36.60f, -34.20f), new Vector2(-25.80f, -23.15f), new Vector2(-13.30f, -10.30f), new Vector2(-28.80f, -51.60f), new Vector2(-6.00f, -54.00f), new Vector2(28.20f, -54.00f)
+            new Vector2(-51.60f, -27.60f), new Vector2(-52.50f, 4.50f), new Vector2(-52.50f, 27.00f), new Vector2(-35.50f, -35.50f), new Vector2(-25.80f, -23.15f), new Vector2(-13.30f, -10.30f), new Vector2(-27.20f, -52.00f), new Vector2(-5.00f, -52.50f), new Vector2(28.20f, -52.50f)
         };
 
         public static readonly Vector2[] RedTurrets = new Vector2[]
         {
-            new Vector2(51.60f, 27.60f), new Vector2(55.20f, 10.80f), new Vector2(55.80f, -27.00f), new Vector2(36.60f, 34.20f), new Vector2(25.20f, 23.10f), new Vector2(13.10f, 11.00f), new Vector2(28.80f, 51.60f), new Vector2(6.00f, 54.00f), new Vector2(-28.20f, 54.00f)
+            new Vector2(51.60f, 27.60f), new Vector2(52.50f, -4.50f), new Vector2(52.50f, -27.00f), new Vector2(35.50f, 35.50f), new Vector2(25.20f, 23.10f), new Vector2(13.10f, 11.00f), new Vector2(27.20f, 52.00f), new Vector2(5.00f, 52.50f), new Vector2(-28.20f, 52.50f)
         };
 
         public struct TeleportSpot
@@ -128,7 +132,7 @@ namespace Stickman.Practice
             new TeleportSpot("RedBuff", -5.50f, -35.00f),
             new TeleportSpot("ExpLane", -47.50f, 45.00f),
             new TeleportSpot("GoldLane", 47.50f, -45.00f),
-            new TeleportSpot("BlueBase", -43.00f, -40.00f),
+            new TeleportSpot("BlueBase", -41.00f, -41.00f),
         };
 
         public struct CourseDef
@@ -147,7 +151,7 @@ namespace Stickman.Practice
         public static readonly CourseDef[] Courses = new CourseDef[]
         {
             new CourseDef("BaseToMid", 12.0f, 16.0f, 22.0f, new Vector2[] { new Vector2(-42.00f, -40.00f), new Vector2(-29.00f, -25.00f), new Vector2(-15.00f, -13.00f), new Vector2(0.00f, 0.00f), new Vector2(15.00f, 13.00f) }),
-            new CourseDef("RiverChain", 14.0f, 19.0f, 26.0f, new Vector2[] { new Vector2(-30.00f, -3.00f), new Vector2(-22.00f, 22.00f), new Vector2(0.00f, 0.00f), new Vector2(22.00f, -22.00f), new Vector2(25.00f, -12.00f) }),
+            new CourseDef("RiverChain", 14.0f, 19.0f, 26.0f, new Vector2[] { new Vector2(-30.00f, -3.00f), new Vector2(-22.00f, 22.00f), new Vector2(0.00f, 0.00f), new Vector2(22.00f, -22.00f), new Vector2(26.50f, -15.50f) }),
             new CourseDef("JungleSweep", 16.0f, 22.0f, 30.0f, new Vector2[] { new Vector2(-42.00f, -40.00f), new Vector2(-5.50f, -35.00f), new Vector2(22.00f, -22.00f), new Vector2(0.00f, 0.00f), new Vector2(-30.00f, -3.00f), new Vector2(-42.00f, -40.00f) }),
         };
     }

@@ -26,8 +26,9 @@ MonoBehaviour:
   cableDetachRadius: 0.95
   postDetachGlideSpeed: 9.5
   postDetachGlideDuration: 0.09
-  cableTrailingMaxAge: 2.6
+  cableTrailingMaxAge: 30
   cableMaxDualFlightDist: 38
+  cableMaxVisualChain: 10
   oppositeCancelDot: -0.92
   blockedDetachSeconds: 0.14
   maxEnergy: 100

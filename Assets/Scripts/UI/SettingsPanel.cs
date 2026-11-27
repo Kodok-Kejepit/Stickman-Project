@@ -16,6 +16,10 @@ namespace Stickman.UI
         Text _titleText;
         Text _fpsBtnText;
         Text _langBtnText;
+        Slider _flightSpeedSlider;
+        Text _flightSpeedValText;
+        Slider _btnSizeSlider;
+        Text _btnSizeValText;
         Slider _pitchSlider;
         Text _pitchValText;
         Slider _zoomSlider;
@@ -71,20 +75,30 @@ namespace Stickman.UI
             cardGo.transform.SetParent(transform, false);
             var cardRt = cardGo.AddComponent<RectTransform>();
             cardRt.anchorMin = cardRt.anchorMax = new Vector2(0.5f, 0.5f);
-            cardRt.sizeDelta = new Vector2(780f, 690f);
+            cardRt.sizeDelta = new Vector2(800f, 740f);
             var cardImg = cardGo.AddComponent<Image>();
             cardImg.color = new Color(0.09f, 0.12f, 0.16f, 0.96f);
 
             var vlg = cardGo.AddComponent<VerticalLayoutGroup>();
-            vlg.padding = new RectOffset(28, 28, 20, 20);
-            vlg.spacing = 8f;
+            vlg.padding = new RectOffset(28, 28, 16, 16);
+            vlg.spacing = 6f;
             vlg.childControlHeight = false;
             vlg.childControlWidth = true;
             vlg.childForceExpandWidth = true;
 
-            _titleText = AddLabel(cardRt, "SETTINGS", 26, TextAnchor.MiddleCenter, Color.white, 36f);
+            _titleText = AddLabel(cardRt, "SETTINGS", 26, TextAnchor.MiddleCenter, Color.white, 34f);
 
             _fpsBtnText = AddCycleRow(cardRt, "Target FPS", CycleFps);
+            AddSliderRow(cardRt, "Flight Speed", 0.60f, 1.80f, out _flightSpeedSlider, out _flightSpeedValText, val =>
+            {
+                SettingsStore.Current.cableSpeedMultiplier = val;
+                SaveAndNotify();
+            });
+            AddSliderRow(cardRt, "Button Size", 0.75f, 1.80f, out _btnSizeSlider, out _btnSizeValText, val =>
+            {
+                SettingsStore.Current.hudButtonScale = val;
+                SaveAndNotify();
+            });
             AddSliderRow(cardRt, "Camera Pitch", 45f, 65f, out _pitchSlider, out _pitchValText, val =>
             {
                 SettingsStore.Current.cameraPitch = val;
@@ -141,6 +155,10 @@ namespace Stickman.UI
             _titleText.text = Loc.Get("settings.title", s.language);
             _fpsBtnText.text = s.targetFps == 0 ? "AUTO" : s.targetFps.ToString();
             _langBtnText.text = s.language == "en" ? "English" : "Indonesia";
+            _flightSpeedSlider.value = s.cableSpeedMultiplier;
+            _flightSpeedValText.text = s.cableSpeedMultiplier.ToString("0.00") + "x (" + SpeedTierLabel(s.cableSpeedMultiplier, s.language) + ")";
+            _btnSizeSlider.value = s.hudButtonScale;
+            _btnSizeValText.text = s.hudButtonScale.ToString("0.00") + "x";
             _pitchSlider.value = s.cameraPitch;
             _pitchValText.text = s.cameraPitch.ToString("0") + "°";
             _zoomSlider.value = s.cameraDistance;
@@ -156,6 +174,14 @@ namespace Stickman.UI
             _shakeToggle.isOn = s.screenShake;
             _fpsToggle.isOn = s.showFps;
             _suppressEvents = false;
+        }
+
+        static string SpeedTierLabel(float mult, string lang)
+        {
+            if (mult < 0.85f) return Loc.Get("speed.slow", lang);
+            if (mult < 1.15f) return Loc.Get("speed.normal", lang);
+            if (mult < 1.45f) return Loc.Get("speed.fast", lang);
+            return Loc.Get("speed.turbo", lang);
         }
 
         void CycleFps()
@@ -197,7 +223,7 @@ namespace Stickman.UI
 
         Text AddCycleRow(RectTransform parent, string label, Action onClick)
         {
-            var row = CreateRow(parent, 40f);
+            var row = CreateRow(parent, 36f);
             AddRowLabel(row, label, 0.55f);
 
             var btnGo = new GameObject("CycleBtn");
@@ -226,14 +252,14 @@ namespace Stickman.UI
 
         void AddSliderRow(RectTransform parent, string label, float min, float max, out Slider slider, out Text valText, Action<float> onVal)
         {
-            var row = CreateRow(parent, 34f);
-            AddRowLabel(row, label, 0.42f);
+            var row = CreateRow(parent, 31f);
+            AddRowLabel(row, label, 0.38f);
 
             var sGo = new GameObject("Slider");
             sGo.transform.SetParent(row, false);
             var srt = sGo.AddComponent<RectTransform>();
-            srt.anchorMin = new Vector2(0.44f, 0.12f);
-            srt.anchorMax = new Vector2(0.84f, 0.88f);
+            srt.anchorMin = new Vector2(0.40f, 0.12f);
+            srt.anchorMax = new Vector2(0.76f, 0.88f);
             srt.offsetMin = srt.offsetMax = Vector2.zero;
 
             var bg = new GameObject("Bg").AddComponent<Image>();
@@ -281,18 +307,18 @@ namespace Stickman.UI
             var vGo = new GameObject("Val");
             vGo.transform.SetParent(row, false);
             var vrt = vGo.AddComponent<RectTransform>();
-            vrt.anchorMin = new Vector2(0.86f, 0f); vrt.anchorMax = new Vector2(1f, 1f);
+            vrt.anchorMin = new Vector2(0.78f, 0f); vrt.anchorMax = new Vector2(1f, 1f);
             vrt.offsetMin = vrt.offsetMax = Vector2.zero;
             valText = vGo.AddComponent<Text>();
             valText.font = _font;
-            valText.fontSize = 18;
+            valText.fontSize = 17;
             valText.alignment = TextAnchor.MiddleRight;
             valText.color = new Color(0.85f, 0.95f, 1f, 1f);
         }
 
         Toggle AddToggleRow(RectTransform parent, string label, Action<bool> onVal)
         {
-            var row = CreateRow(parent, 34f);
+            var row = CreateRow(parent, 30f);
             AddRowLabel(row, label, 0.72f);
 
             var tGo = new GameObject("Toggle");

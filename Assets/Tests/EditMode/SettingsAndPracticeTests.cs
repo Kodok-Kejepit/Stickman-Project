@@ -12,26 +12,33 @@ namespace Stickman.Tests
         {
             var s = SettingsData.Default();
             s.targetFps = 90;
+            s.cableSpeedMultiplier = 1.45f;
+            s.hudButtonScale = 1.50f;
             s.cameraPitch = 62f;
             s.cameraDistance = 30f;
             s.cameraPanSensitivity = 1.85f;
             s.cableOffset = new Vector2(85f, -45f);
-            s.cableScale = 1.25f;
+            s.cableScale = 2.20f;
             s.language = "en";
 
             string json = SettingsStore.ToJson(s);
             SettingsData loaded = SettingsStore.FromJson(json);
 
             Assert.That(loaded.targetFps, Is.EqualTo(90));
+            Assert.That(loaded.cableSpeedMultiplier, Is.EqualTo(1.45f).Within(0.01f));
+            Assert.That(loaded.hudButtonScale, Is.EqualTo(1.50f).Within(0.01f));
             Assert.That(loaded.cameraPitch, Is.EqualTo(62f).Within(0.01f));
             Assert.That(loaded.cameraDistance, Is.EqualTo(30f).Within(0.01f));
             Assert.That(loaded.cameraPanSensitivity, Is.EqualTo(1.85f).Within(0.01f));
             Assert.That(loaded.cableOffset.x, Is.EqualTo(85f).Within(0.01f));
             Assert.That(loaded.cableOffset.y, Is.EqualTo(-45f).Within(0.01f));
-            Assert.That(loaded.cableScale, Is.EqualTo(1.25f).Within(0.01f));
+            Assert.That(loaded.cableScale, Is.EqualTo(2.20f).Within(0.01f));
             Assert.That(loaded.language, Is.EqualTo("en"));
 
-            SettingsData clamped = SettingsStore.FromJson("{\"cameraPitch\":999,\"cameraPanSensitivity\":99,\"targetFps\":77,\"language\":\"xx\"}");
+            SettingsData clamped = SettingsStore.FromJson("{\"cableSpeedMultiplier\":99,\"hudButtonScale\":99,\"cableScale\":99,\"cameraPitch\":999,\"cameraPanSensitivity\":99,\"targetFps\":77,\"language\":\"xx\"}");
+            Assert.That(clamped.cableSpeedMultiplier, Is.EqualTo(1.80f).Within(0.01f));
+            Assert.That(clamped.hudButtonScale, Is.EqualTo(1.80f).Within(0.01f));
+            Assert.That(clamped.cableScale, Is.EqualTo(2.40f).Within(0.01f));
             Assert.That(clamped.cameraPitch, Is.EqualTo(65f).Within(0.01f));
             Assert.That(clamped.cameraPanSensitivity, Is.EqualTo(2.5f).Within(0.01f));
             Assert.That(clamped.targetFps, Is.EqualTo(0));

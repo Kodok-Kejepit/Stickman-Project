@@ -31,6 +31,12 @@ namespace Stickman.Core
                 case "skill.cancel": return en ? "CANCEL" : "BATAL";
                 case "settings.title": return en ? "SETTINGS" : "PENGATURAN";
                 case "settings.fps": return en ? "Target FPS" : "Target FPS";
+                case "settings.flightspeed": return en ? "Flight Speed" : "Kecepatan Terbang";
+                case "settings.btnsize": return en ? "Button Size" : "Ukuran Tombol";
+                case "speed.slow": return en ? "Slow" : "Pelan";
+                case "speed.normal": return en ? "Normal" : "Normal";
+                case "speed.fast": return en ? "Fast" : "Cepat";
+                case "speed.turbo": return en ? "Turbo" : "Ngebut";
                 case "settings.pitch": return en ? "Camera Pitch" : "Sudut Kamera";
                 case "settings.zoom": return en ? "Camera Distance" : "Jarak Kamera";
                 case "settings.pansens": return en ? "Camera Pan Sensitivity" : "Sensitivitas Geser Kamera";

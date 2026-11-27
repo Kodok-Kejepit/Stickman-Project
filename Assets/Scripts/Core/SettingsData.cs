@@ -8,6 +8,8 @@ namespace Stickman.Core
     public sealed class SettingsData
     {
         public int targetFps;
+        public float cableSpeedMultiplier = 1.0f;
+        public float hudButtonScale = 1.0f;
         public float cameraPitch = 55f;
         public float cameraDistance = 28f;
         public float cameraPanSensitivity = 1.0f;
@@ -42,6 +44,8 @@ namespace Stickman.Core
         {
             if (targetFps != 0 && targetFps != 60 && targetFps != 90 && targetFps != 120)
                 targetFps = 0;
+            cableSpeedMultiplier = Mathf.Clamp(cableSpeedMultiplier <= 0f ? 1f : cableSpeedMultiplier, 0.60f, 1.80f);
+            hudButtonScale = Mathf.Clamp(hudButtonScale <= 0f ? 1f : hudButtonScale, 0.75f, 1.80f);
             cameraPitch = Mathf.Clamp(cameraPitch, 45f, 65f);
             cameraDistance = Mathf.Clamp(cameraDistance, 20f, 36f);
             cameraPanSensitivity = Mathf.Clamp(cameraPanSensitivity <= 0f ? 1f : cameraPanSensitivity, 0.4f, 2.5f);
@@ -49,11 +53,11 @@ namespace Stickman.Core
             joystickDeadZone = Mathf.Clamp(joystickDeadZone, 0.05f, 0.30f);
             if (language != "en" && language != "id") language = "id";
 
-            joystickScale = Mathf.Clamp(joystickScale <= 0f ? 1f : joystickScale, 0.6f, 1.6f);
-            cableScale = Mathf.Clamp(cableScale <= 0f ? 1f : cableScale, 0.6f, 1.6f);
-            spinScale = Mathf.Clamp(spinScale <= 0f ? 1f : spinScale, 0.6f, 1.6f);
-            ultScale = Mathf.Clamp(ultScale <= 0f ? 1f : ultScale, 0.6f, 1.6f);
-            basicScale = Mathf.Clamp(basicScale <= 0f ? 1f : basicScale, 0.6f, 1.6f);
+            joystickScale = Mathf.Clamp(joystickScale <= 0f ? 1f : joystickScale, 0.6f, 2.4f);
+            cableScale = Mathf.Clamp(cableScale <= 0f ? 1f : cableScale, 0.6f, 2.4f);
+            spinScale = Mathf.Clamp(spinScale <= 0f ? 1f : spinScale, 0.6f, 2.4f);
+            ultScale = Mathf.Clamp(ultScale <= 0f ? 1f : ultScale, 0.6f, 2.4f);
+            basicScale = Mathf.Clamp(basicScale <= 0f ? 1f : basicScale, 0.6f, 2.4f);
 
             joystickOffset = ClampOffset(joystickOffset);
             cableOffset = ClampOffset(cableOffset);

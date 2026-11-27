@@ -47,10 +47,13 @@ namespace Stickman.Tests
         [Test]
         public void ArenaLayoutHasValidWallsAndClearWaypoints()
         {
-            Assert.That(ArenaLayoutData.Walls.Length, Is.EqualTo(40));
+            Assert.That(ArenaLayoutData.Walls.Length, Is.EqualTo(44));
             Assert.That(ArenaLayoutData.Bushes.Length, Is.EqualTo(36));
             Assert.That(ArenaLayoutData.BlueTurrets.Length, Is.EqualTo(9));
             Assert.That(ArenaLayoutData.RedTurrets.Length, Is.EqualTo(9));
+
+            Assert.That(ArenaLayoutData.BlueNexus.x, Is.EqualTo(ArenaLayoutData.BlueNexus.y).Within(0.01f), "BlueNexus centered on 45-deg diagonal");
+            Assert.That(ArenaLayoutData.RedNexus.x, Is.EqualTo(ArenaLayoutData.RedNexus.y).Within(0.01f), "RedNexus centered on 45-deg diagonal");
 
             for (int i = 0; i < ArenaLayoutData.Walls.Length; i++)
             {
@@ -81,8 +84,26 @@ namespace Stickman.Tests
                         Assert.That(PolygonMeshBuilder.ContainsPoint(ArenaLayoutData.Walls[w], wps[j]), Is.False,
                             $"Course {ArenaLayoutData.Courses[c].Id} wp {j} is inside wall {w}");
                     }
+                    Assert.That(Vector2.Distance(wps[j], ArenaLayoutData.BlueNexus), Is.GreaterThanOrEqualTo(ArenaLayoutData.NexusRadius + 0.5f));
+                    Assert.That(Vector2.Distance(wps[j], ArenaLayoutData.RedNexus), Is.GreaterThanOrEqualTo(ArenaLayoutData.NexusRadius + 0.5f));
+                    for (int t = 0; t < ArenaLayoutData.BlueTurrets.Length; t++)
+                    {
+                        Assert.That(Vector2.Distance(wps[j], ArenaLayoutData.BlueTurrets[t]), Is.GreaterThanOrEqualTo(ArenaLayoutData.TurretRadius + 0.5f));
+                        Assert.That(Vector2.Distance(wps[j], ArenaLayoutData.RedTurrets[t]), Is.GreaterThanOrEqualTo(ArenaLayoutData.TurretRadius + 0.5f));
+                    }
                 }
             }
+
+            float minCorridorBot = float.MaxValue;
+            float minCorridorTop = float.MaxValue;
+            for (int a = 0; a < ArenaLayoutData.Walls[5].Length; a++)
+                for (int b = 0; b < ArenaLayoutData.Walls[6].Length; b++)
+                    minCorridorBot = Mathf.Min(minCorridorBot, PointToSegmentDist(ArenaLayoutData.Walls[5][a], ArenaLayoutData.Walls[6][b], ArenaLayoutData.Walls[6][(b + 1) % ArenaLayoutData.Walls[6].Length]));
+            for (int a = 0; a < ArenaLayoutData.Walls[34].Length; a++)
+                for (int b = 0; b < ArenaLayoutData.Walls[33].Length; b++)
+                    minCorridorTop = Mathf.Min(minCorridorTop, PointToSegmentDist(ArenaLayoutData.Walls[34][a], ArenaLayoutData.Walls[33][b], ArenaLayoutData.Walls[33][(b + 1) % ArenaLayoutData.Walls[33].Length]));
+            Assert.That(minCorridorBot, Is.GreaterThanOrEqualTo(5.0f), "Bot cyclone-eye corridor must be open");
+            Assert.That(minCorridorTop, Is.GreaterThanOrEqualTo(5.0f), "Top cyclone-eye corridor must be open");
         }
 
         [Test]

@@ -218,6 +218,99 @@ namespace Stickman.Tests
         }
 
         [Test]
+        public void MeteorTrailKeepsTenCablesAndEvictsOldestOnEleventhAndTwelfth()
+        {
+            var eng = new CableEngine(maxRange: 30f, shootSpeed: 1000f, dualPullSpeed: 14f, maxDualFlightDist: 50f, maxVisualChain: 10);
+            var walls = TwoVerticalWalls(-5f, 5f);
+            Vector3 hero = new Vector3(0f, 0f, -25f);
+            float now = 0f;
+
+            bool HasAttachedSeq(int seqId)
+            {
+                for (int i = 0; i < CableEngine.MaxSlots; i++)
+                {
+                    CableSlot s = eng.GetSlot(i);
+                    if (s.SequenceId == seqId && (s.State == CableSlotState.Latched || s.State == CableSlotState.Trailing))
+                        return true;
+                }
+                return false;
+            }
+
+            Vector3 vel = Vector3.zero;
+            for (int k = 1; k <= 12; k++)
+            {
+                float xTarget = (k % 2 == 1) ? -5f : 5f;
+                Vector3 dir = new Vector3(xTarget - hero.x, 0f, 4f).normalized;
+                Assert.That(eng.TryCast(hero, dir, now, 0.04f, out _), Is.True, "Cast failed at " + k);
+                eng.Step(0.02f, now + 0.02f, hero, false, walls, out vel, out _, out _, out _, out _, out _);
+                hero += vel * 0.03f;
+                now += 0.05f;
+
+                if (k <= 10)
+                {
+                    Assert.That(eng.AttachedVisualCount, Is.EqualTo(k), "Expected attached count == " + k);
+                }
+                else if (k == 11)
+                {
+                    Assert.That(eng.AttachedVisualCount, Is.EqualTo(10));
+                    Assert.That(HasAttachedSeq(1), Is.False, "Cable 1 must disappear when Cable 11 attaches");
+                    for (int s = 2; s <= 11; s++) Assert.That(HasAttachedSeq(s), Is.True, "Seq " + s);
+                }
+                else if (k == 12)
+                {
+                    Assert.That(eng.AttachedVisualCount, Is.EqualTo(10));
+                    Assert.That(HasAttachedSeq(1), Is.False);
+                    Assert.That(HasAttachedSeq(2), Is.False, "Cable 2 must disappear when Cable 12 attaches");
+                    for (int s = 3; s <= 12; s++) Assert.That(HasAttachedSeq(s), Is.True, "Seq " + s);
+                }
+            }
+
+            for (int step = 0; step < 250; step++)
+            {
+                hero += vel * 0.02f;
+                eng.Step(0.02f, now + step * 0.02f, hero, false, walls, out vel, out bool air, out _, out _, out _, out _);
+                if (!air && eng.LatchedCount == 0 && eng.TrailingCount == 0) break;
+            }
+            Assert.That(eng.LatchedCount, Is.EqualTo(0));
+            Assert.That(eng.TrailingCount, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void SpeedMultiplierScalesFlightSpeedWithoutChangingDestination()
+        {
+            var walls = TwoVerticalWalls(-6f, 6f);
+            float[] mults = { 0.70f, 1.00f, 1.50f };
+            float[] initialVz = new float[mults.Length];
+            float[] landedZ = new float[mults.Length];
+
+            for (int m = 0; m < mults.Length; m++)
+            {
+                var eng = new CableEngine(maxRange: 28f, shootSpeed: 400f, dualPullSpeed: 21.5f, dualMinSpeed: 15.5f);
+                eng.SetSpeedMultiplier(mults[m]);
+                Vector3 hero = new Vector3(0f, 0f, -8f);
+
+                eng.TryCast(hero, new Vector3(-6f, 0f, 8f).normalized, 0f, 0.04f, out _);
+                eng.Step(0.04f, 0.04f, hero, false, walls, out _, out _, out _, out _, out _, out _);
+                eng.TryCast(hero, new Vector3(6f, 0f, 8f).normalized, 0.1f, 0.04f, out _);
+                eng.Step(0.04f, 0.14f, hero, false, walls, out Vector3 vel, out _, out _, out _, out _, out _);
+                initialVz[m] = vel.z;
+
+                for (int step = 0; step < 120; step++)
+                {
+                    hero += vel * 0.02f;
+                    eng.Step(0.02f, 0.16f + step * 0.02f, hero, false, walls, out vel, out bool air, out _, out _, out _, out _);
+                    if (!air && eng.LatchedCount == 0) break;
+                }
+                landedZ[m] = hero.z;
+            }
+
+            Assert.That(initialVz[1], Is.GreaterThan(initialVz[0] + 4f));
+            Assert.That(initialVz[2], Is.GreaterThan(initialVz[1] + 6f));
+            Assert.That(Mathf.Abs(landedZ[0] - landedZ[1]), Is.LessThan(0.6f));
+            Assert.That(Mathf.Abs(landedZ[2] - landedZ[1]), Is.LessThan(0.6f));
+        }
+
+        [Test]
         public void AimDeviationDegreesMatchesGeometry()
         {
             float zero = CableEngine.ComputeAimDeviationDeg(Vector3.zero, Vector3.forward, new Vector3(0f, 0f, 10f));

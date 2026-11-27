@@ -23,8 +23,9 @@ namespace Stickman.Hero
         public float cableDetachRadius = 0.95f;
         public float postDetachGlideSpeed = 9.5f;
         public float postDetachGlideDuration = 0.09f;
-        public float cableTrailingMaxAge = 2.6f;
+        public float cableTrailingMaxAge = 30.0f;
         public float cableMaxDualFlightDist = 38.0f;
+        public int cableMaxVisualChain = 10;
         public float oppositeCancelDot = -0.92f;
         public float blockedDetachSeconds = 0.14f;
 

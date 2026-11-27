@@ -86,7 +86,7 @@ namespace Stickman.UI
 
             _scaleSlider = sliderGo.AddComponent<Slider>();
             _scaleSlider.minValue = 0.6f;
-            _scaleSlider.maxValue = 1.6f;
+            _scaleSlider.maxValue = 2.4f;
             _scaleSlider.handleRect = handle.rectTransform;
             _scaleSlider.targetGraphic = handle;
             _scaleSlider.onValueChanged.AddListener(OnScaleChanged);
@@ -161,8 +161,9 @@ namespace Stickman.UI
                 case 3: _working.cableScale = val; break;
                 case 4: _working.ultScale = val; break;
             }
-            _targets[_selectedIdx].localScale = Vector3.one * val;
-            _handles[_selectedIdx].GetComponent<RectTransform>().localScale = Vector3.one * val;
+            float effective = Mathf.Clamp(val * Mathf.Clamp(_working.hudButtonScale <= 0f ? 1f : _working.hudButtonScale, 0.75f, 1.80f), 0.55f, 2.60f);
+            _targets[_selectedIdx].localScale = Vector3.one * effective;
+            _handles[_selectedIdx].GetComponent<RectTransform>().localScale = Vector3.one * effective;
             _scaleText.text = val.ToString("0.00") + "x";
         }
 
@@ -186,10 +187,11 @@ namespace Stickman.UI
             _working.spinOffset = Vector2.zero; _working.spinScale = 1f;
             _working.cableOffset = Vector2.zero; _working.cableScale = 1f;
             _working.ultOffset = Vector2.zero; _working.ultScale = 1f;
+            float globalScale = Mathf.Clamp(_working.hudButtonScale <= 0f ? 1f : _working.hudButtonScale, 0.75f, 1.80f);
             for (int i = 0; i < _targets.Length; i++)
             {
                 _targets[i].anchoredPosition = _basePositions[i];
-                _targets[i].localScale = Vector3.one;
+                _targets[i].localScale = Vector3.one * globalScale;
             }
             SyncHandlesToTargets();
             SelectSlot(_selectedIdx);

@@ -122,12 +122,12 @@ namespace Stickman.Core
             bool hookedTurret = hero.transform.position.x < -7.5f && hero.transform.position.z < -7.0f;
             Vector3 afterTurretPos = hero.transform.position;
 
-            hero.TeleportHero(new Vector3(-55f, 0f, -52f));
+            hero.TeleportHero(new Vector3(-53f, 0f, -53f));
             yield return null;
-            Vector3 toNexus = new Vector3(ArenaLayoutData.BlueNexus.x + 55f, 0f, ArenaLayoutData.BlueNexus.y + 52f);
+            Vector3 toNexus = new Vector3(ArenaLayoutData.BlueNexus.x + 53f, 0f, ArenaLayoutData.BlueNexus.y + 53f);
             input.InjectCableCast(toNexus.normalized);
             for (int i = 0; i < 24; i++) yield return null;
-            bool hookedNexus = hero.transform.position.x > -53.5f && hero.transform.position.z > -50.5f;
+            bool hookedNexus = hero.transform.position.x > -51.5f && hero.transform.position.z > -51.5f;
             AssertCheck("CableHooksTurretAndBaseNexus", hookedTurret && hookedNexus,
                 $"turretPos={afterTurretPos} nexusPos={hero.transform.position}");
 
@@ -228,7 +228,26 @@ namespace Stickman.Core
                 $"active={practice.Course.IsActive} cp={practice.Course.NextWaypoint}");
             practice.SetMode(PracticeMode.FreePractice);
 
-            // 12. Settings round-trip persistence
+            // 13. Flight Speed Multiplier scales pull speed cleanly
+            float origSpeedMult = SettingsStore.Current.cableSpeedMultiplier;
+            SettingsStore.Current.cableSpeedMultiplier = 0.65f;
+            hero.TeleportHero(new Vector3(-4f, 0f, -4f));
+            yield return null;
+            input.InjectCableCast(new Vector3(-1f, 0f, 1f));
+            for (int i = 0; i < 24; i++) yield return null;
+            float slowMove = Vector3.Distance(new Vector3(-4f, 0f, -4f), hero.transform.position);
+
+            SettingsStore.Current.cableSpeedMultiplier = 1.65f;
+            hero.TeleportHero(new Vector3(-4f, 0f, -4f));
+            yield return null;
+            input.InjectCableCast(new Vector3(-1f, 0f, 1f));
+            for (int i = 0; i < 24; i++) yield return null;
+            float fastMove = Vector3.Distance(new Vector3(-4f, 0f, -4f), hero.transform.position);
+            SettingsStore.Current.cableSpeedMultiplier = origSpeedMult;
+            AssertCheck("FlightSpeedMultiplierChangesVelocity", slowMove > 1.0f && fastMove > slowMove * 1.5f,
+                $"slow={slowMove:0.00} fast={fastMove:0.00}");
+
+            // 14. Settings round-trip persistence
             var orig = SettingsStore.Current.Clone();
             var testSet = orig.Clone();
             testSet.cableOffset = new Vector2(42f, -18f);

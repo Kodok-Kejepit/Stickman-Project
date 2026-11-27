@@ -151,6 +151,7 @@ namespace Stickman.Hero
             out bool isAirborne,
             out bool isCablePulled)
         {
+            _engine.SetSpeedMultiplier(SettingsStore.Current.cableSpeedMultiplier);
             _engine.Step(
                 dt, now, heroPos, blockedThisFrame, _cachedWallCast,
                 out desiredVelocity, out isAirborne, out isCablePulled,

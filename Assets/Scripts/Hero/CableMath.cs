@@ -38,14 +38,14 @@ namespace Stickman.Hero
     public delegate bool WallSegmentCast(Vector3 from, Vector3 to, out Vector3 hitPoint, out Vector3 hitNormal);
 
     /// <summary>
-    /// Pure deterministic steel-cable physics engine: 12-slot pool supporting golden meteor trailing
-    /// visuals, swept obstacle detection, launch-symmetry dual-cable overshoot flight, launch-angle
-    /// speed scaling, 3+ cable chaining, opposite-angle cancel, and short post-detach glide.
+    /// Pure deterministic steel-cable physics engine: 14-slot pool with 10-cable FIFO golden meteor trail,
+    /// player-configurable flight speed multiplier, swept obstacle detection, launch-symmetry dual-cable
+    /// overshoot flight, launch-angle speed scaling, opposite-angle cancel, and short post-detach glide.
     /// Zero GC allocations per frame.
     /// </summary>
     public sealed class CableEngine
     {
-        public const int MaxSlots = 12;
+        public const int MaxSlots = 14;
 
         readonly CableSlot[] _slots = new CableSlot[MaxSlots];
         readonly float _maxRange;
@@ -61,9 +61,11 @@ namespace Stickman.Hero
         readonly float _maxDualFlightDist;
         readonly float _oppositeCancelDot;
         readonly float _blockedDetachSeconds;
+        readonly int _maxVisualChain;
 
         int _nextSeqId = 1;
         float _lastCastTime = -100f;
+        float _speedMultiplier = 1.0f;
         int _activePairOlderId = -1;
         int _activePairNewerId = -1;
         Vector3 _pairForwardDir;
@@ -88,8 +90,9 @@ namespace Stickman.Hero
             float oppositeCancelDot = -0.92f,
             float blockedDetachSeconds = 0.14f,
             float dualMinSpeed = 15.5f,
-            float trailingMaxAge = 2.6f,
-            float maxDualFlightDist = 38.0f)
+            float trailingMaxAge = 30.0f,
+            float maxDualFlightDist = 38.0f,
+            int maxVisualChain = 10)
         {
             _maxRange = maxRange;
             _shootSpeed = shootSpeed;
@@ -104,6 +107,7 @@ namespace Stickman.Hero
             _dualMinSpeed = dualMinSpeed;
             _trailingMaxAge = trailingMaxAge;
             _maxDualFlightDist = maxDualFlightDist;
+            _maxVisualChain = Mathf.Clamp(maxVisualChain, 2, MaxSlots - 2);
         }
 
         public static CableEngine FromTuning(HeroTuning t)
@@ -113,12 +117,14 @@ namespace Stickman.Hero
                 t.singleCablePullSpeed, t.dualCablePullSpeed, t.cableDetachRadius,
                 t.postDetachGlideSpeed, t.postDetachGlideDuration,
                 t.oppositeCancelDot, t.blockedDetachSeconds,
-                t.dualCableMinSpeed, t.cableTrailingMaxAge, t.cableMaxDualFlightDist);
+                t.dualCableMinSpeed, t.cableTrailingMaxAge, t.cableMaxDualFlightDist,
+                t.cableMaxVisualChain);
         }
 
         public CableSlot GetSlot(int index) => _slots[index];
         public int LatchedCount => CountInState(CableSlotState.Latched);
         public int TrailingCount => CountInState(CableSlotState.Trailing);
+        public int AttachedVisualCount => LatchedCount + TrailingCount;
         public int ActiveVisualCount
         {
             get
@@ -131,6 +137,12 @@ namespace Stickman.Hero
         }
         public int LatchesThisFlight => _latchesThisFlight;
         public int MaxSimultaneousLatched => _maxSimultaneousLatched;
+        public float SpeedMultiplier => _speedMultiplier;
+
+        public void SetSpeedMultiplier(float multiplier)
+        {
+            _speedMultiplier = Mathf.Clamp(multiplier <= 0f ? 1f : multiplier, 0.60f, 1.80f);
+        }
 
         public bool CanCast(float now, float cooldown)
         {
@@ -209,13 +221,15 @@ namespace Stickman.Hero
 
             if (dt <= 0f) return;
 
-            // 1. Advance Extending, age Trailing, and retract Retracting slots.
+            float shootSpd = _shootSpeed * Mathf.Lerp(1f, _speedMultiplier, 0.5f);
+
+            // 1. Advance Extending and Retracting slots (Trailing stays until evicted at cable 11+ or on landing).
             for (int i = 0; i < MaxSlots; i++)
             {
                 if (_slots[i].State == CableSlotState.Extending)
                 {
                     float remaining = _maxRange - _slots[i].Traveled;
-                    float step = Mathf.Min(_shootSpeed * dt, remaining);
+                    float step = Mathf.Min(shootSpd * dt, remaining);
                     Vector3 prevTip = _slots[i].Tip;
                     Vector3 nextTip = prevTip + _slots[i].Direction * step;
                     _slots[i].Traveled += step;
@@ -230,8 +244,9 @@ namespace Stickman.Hero
                         _latchesThisFlight++;
                         _glideTimer = 0f;
 
-                        // Keep only newest 2 Latched; demote older active slots to meteor Trailing.
+                        // Keep newest 2 Latched; demote older active slots to Trailing and enforce 10-cable FIFO cap.
                         DemoteExcessLatchedToTrailing(now);
+                        EnforceMaxVisualChain();
                     }
                     else if (_slots[i].Traveled >= _maxRange - 0.0001f)
                     {
@@ -242,14 +257,6 @@ namespace Stickman.Hero
                     else
                     {
                         _slots[i].Tip = nextTip;
-                    }
-                }
-                else if (_slots[i].State == CableSlotState.Trailing)
-                {
-                    if ((now - _slots[i].TrailStartTime) >= _trailingMaxAge ||
-                        FlatDiff(_slots[i].Anchor, heroPos).sqrMagnitude > 58f * 58f)
-                    {
-                        _slots[i].State = CableSlotState.Retracting;
                     }
                 }
                 else if (_slots[i].State == CableSlotState.Retracting)
@@ -283,7 +290,7 @@ namespace Stickman.Hero
                 {
                     _glideTimer = Mathf.Max(0f, _glideTimer - dt);
                     float ratio = _glideDuration > 0.001f ? (_glideTimer / _glideDuration) : 0f;
-                    desiredVelocity = _glideDir * (_glideSpeed * ratio);
+                    desiredVelocity = _glideDir * (_glideSpeed * _speedMultiplier * ratio);
                     isAirborne = true;
                     if (_glideTimer <= 0f)
                     {
@@ -315,7 +322,7 @@ namespace Stickman.Hero
                     StartGlide(dir);
                     if (_glideTimer > 0f)
                     {
-                        desiredVelocity = _glideDir * _glideSpeed;
+                        desiredVelocity = _glideDir * (_glideSpeed * _speedMultiplier);
                         isAirborne = true;
                     }
                     else
@@ -325,7 +332,7 @@ namespace Stickman.Hero
                     return;
                 }
 
-                desiredVelocity = (diff / dist) * _singlePullSpeed;
+                desiredVelocity = (diff / dist) * (_singlePullSpeed * _speedMultiplier);
                 isAirborne = true;
                 isCablePulled = true;
                 return;
@@ -348,9 +355,10 @@ namespace Stickman.Hero
                 if (Vector3.Dot(u1, u2) < _oppositeCancelDot)
                 {
                     DemoteSlotToTrailing(idxOlder, now);
+                    EnforceMaxVisualChain();
                     _activePairOlderId = -1;
                     _activePairNewerId = -1;
-                    desiredVelocity = u2 * _singlePullSpeed;
+                    desiredVelocity = u2 * (_singlePullSpeed * _speedMultiplier);
                     isAirborne = true;
                     isCablePulled = true;
                     return;
@@ -397,14 +405,14 @@ namespace Stickman.Hero
                     StartGlide(_pairForwardDir);
                     if (_glideTimer > 0f)
                     {
-                        desiredVelocity = _glideDir * _glideSpeed;
+                        desiredVelocity = _glideDir * (_glideSpeed * _speedMultiplier);
                         isAirborne = true;
                     }
                 }
                 return;
             }
 
-            desiredVelocity = _pairForwardDir * _pairSpeed;
+            desiredVelocity = _pairForwardDir * (_pairSpeed * _speedMultiplier);
             isAirborne = true;
             isCablePulled = true;
         }
@@ -468,6 +476,25 @@ namespace Stickman.Hero
                     }
                 }
                 if (oldestIdx >= 0) DemoteSlotToTrailing(oldestIdx, now);
+                else break;
+            }
+        }
+
+        void EnforceMaxVisualChain()
+        {
+            while ((CountInState(CableSlotState.Latched) + CountInState(CableSlotState.Trailing)) > _maxVisualChain)
+            {
+                int oldestIdx = -1;
+                int lowestSeq = int.MaxValue;
+                for (int i = 0; i < MaxSlots; i++)
+                {
+                    if (_slots[i].State == CableSlotState.Trailing && _slots[i].SequenceId < lowestSeq)
+                    {
+                        lowestSeq = _slots[i].SequenceId;
+                        oldestIdx = i;
+                    }
+                }
+                if (oldestIdx >= 0) _slots[oldestIdx].State = CableSlotState.Retracting;
                 else break;
             }
         }
