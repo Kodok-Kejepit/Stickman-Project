@@ -136,10 +136,15 @@ namespace Stickman.Core
             yield return null;
             Vector3 camPanned = mobaCam.transform.position;
             input.SetCameraPan(Vector3.zero, false);
-            for (int i = 0; i < 30; i++) yield return null;
+            float waitSec = 0f;
+            while (waitSec < 0.7f)
+            {
+                waitSec += Time.unscaledDeltaTime;
+                yield return null;
+            }
             Vector3 camReturned = mobaCam.transform.position;
             AssertCheck("CameraPanMovesAndReturns",
-                (camPanned - camBase).magnitude > 10f && (camReturned - camBase).magnitude < 0.5f,
+                (camPanned - camBase).magnitude > 10f && (camReturned - camBase).magnitude < 0.25f,
                 $"panDelta={(camPanned - camBase).magnitude:0.0} returnErr={(camReturned - camBase).magnitude:0.00}");
 
             // 6. Infinite Energy toggle

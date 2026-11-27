@@ -16,6 +16,7 @@ namespace Stickman.Practice
     /// Coordinates Free Practice, Straight Drill, Chain Course, dummy spawning, teleports,
     /// slow-motion, infinite energy, no-cooldown toggles, and persistent session stats.
     /// </summary>
+    [DefaultExecutionOrder(100)]
     public sealed class PracticeManager : MonoBehaviour
     {
         const int MaxDummies = 12;
@@ -53,6 +54,8 @@ namespace Stickman.Practice
 
         void Start()
         {
+            if (hero == null) hero = FindFirstObjectByType<HeroController>();
+            BindHeroEvents();
             // Spawn one default Mid Lane dummy so new players can immediately test "gesek" + ult.
             if (_dummies.Count == 0 && hero != null)
             {

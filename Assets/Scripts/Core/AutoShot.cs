@@ -117,14 +117,16 @@ namespace Stickman.Core
             yield return Capture("05_drill_mode.png");
             if (hud != null && hud.ToolsDrawer != null) hud.ToolsDrawer.SetActive(false);
 
-            // 06: Settings modal overlay
+            // 06: Settings modal overlay (wait 0.9s so damage popups fade completely)
             practice.SetMode(PracticeMode.FreePractice);
+            practice.ClearDummies();
+            for (int i = 0; i < 55; i++) yield return null;
             if (hud != null && hud.Settings != null) hud.Settings.Open();
             yield return Capture("06_settings.png");
             if (hud != null && hud.Settings != null) hud.Settings.Close();
 
-            // Measure 300 frames during active flight + measure camera screen-position jitter
-            Vector3 prevScreen = mainCam != null ? mainCam.WorldToScreenPoint(hero.transform.position) : Vector3.zero;
+            // Measure 300 frames during active flight + measure camera screen-position jitter after LateUpdate
+            Vector3 prevScreen = Vector3.zero;
             bool wasAirbornePrev = false;
 
             for (int i = 0; i < MeasuredFrames; i++)
@@ -139,7 +141,7 @@ namespace Stickman.Core
                     input.InjectCableCast(new Vector3(0.97f, 0f, 0.26f));
                 }
 
-                yield return null;
+                yield return new WaitForEndOfFrame();
                 _stats.Add(Time.unscaledDeltaTime);
 
                 if (mainCam != null)
@@ -162,6 +164,8 @@ namespace Stickman.Core
 
         IEnumerator Capture(string fileName)
         {
+            yield return null;
+            yield return null;
             yield return new WaitForEndOfFrame();
             ScreenCapture.CaptureScreenshot(Path.Combine(_folder, fileName));
             for (int i = 0; i < 6; i++) yield return null;
