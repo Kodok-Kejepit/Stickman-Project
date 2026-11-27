@@ -1,5 +1,6 @@
 using Stickman.Core;
 using Stickman.Hero;
+using Stickman.Input;
 using Stickman.Practice;
 using UnityEngine;
 
@@ -7,7 +8,8 @@ namespace Stickman.Camera
 {
     /// <summary>
     /// Deterministic fixed-yaw MOBA top-down camera running in <c>LateUpdate</c>.
-    /// Zero smoothing lag during cable flight to guarantee crisp tracking with zero jitter.
+    /// Zero smoothing lag during cable flight to guarantee crisp tracking with zero jitter,
+    /// plus free screen-drag / minimap camera peeking.
     /// </summary>
     [DefaultExecutionOrder(200)]
     public sealed class MobaCamera : MonoBehaviour
@@ -15,18 +17,21 @@ namespace Stickman.Camera
         [SerializeField] CameraTuning tuning;
         [SerializeField] Transform target;
         [SerializeField] HeroController hero;
+        [SerializeField] InputRouter inputRouter;
 
         UnityEngine.Camera _cam;
         bool _topDownOverview;
         HeroMotionState _prevState;
         float _shakeTimer;
         Vector3 _shakeOffset;
+        Vector3 _currentPanXZ;
 
-        public void SetReferences(CameraTuning camTuning, Transform heroTransform, HeroController heroCtrl)
+        public void SetReferences(CameraTuning camTuning, Transform heroTransform, HeroController heroCtrl, InputRouter router = null)
         {
             tuning = camTuning;
             target = heroTransform;
             hero = heroCtrl;
+            if (router != null) inputRouter = router;
         }
 
         public void SetTopDownOverview(bool overview)
@@ -57,11 +62,13 @@ namespace Stickman.Camera
         void Awake()
         {
             _cam = GetComponent<UnityEngine.Camera>();
+            if (inputRouter == null) inputRouter = FindFirstObjectByType<InputRouter>();
         }
 
         void LateUpdate()
         {
             if (tuning == null || target == null) return;
+            if (inputRouter == null) inputRouter = FindFirstObjectByType<InputRouter>();
 
             if (_topDownOverview)
             {
@@ -75,6 +82,17 @@ namespace Stickman.Camera
             if (_cam != null && Mathf.Abs(_cam.fieldOfView - tuning.verticalFov) > 0.01f)
                 _cam.fieldOfView = tuning.verticalFov;
 
+            if (inputRouter != null && inputRouter.IsCameraPanning)
+            {
+                _currentPanXZ = inputRouter.CameraPanOffsetXZ;
+            }
+            else if (_currentPanXZ.sqrMagnitude > 0.0001f)
+            {
+                float pt = 1f - Mathf.Exp(-tuning.panReturnSharpness * Time.unscaledDeltaTime);
+                _currentPanXZ = Vector3.Lerp(_currentPanXZ, Vector3.zero, pt);
+                if (_currentPanXZ.sqrMagnitude < 0.0004f) _currentPanXZ = Vector3.zero;
+            }
+
             HeroMotionState curState = hero != null ? hero.State : HeroMotionState.Idle;
             bool wasAirborne = _prevState == HeroMotionState.AirborneCable || _prevState == HeroMotionState.AirborneGlide;
             bool isGround = curState == HeroMotionState.Idle || curState == HeroMotionState.Running;
@@ -84,12 +102,12 @@ namespace Stickman.Camera
             }
             _prevState = curState;
 
-            Vector3 desiredPos = CameraMath.ComputeTargetPosition(
-                target.position, s.cameraPitch, s.cameraDistance,
+            Vector3 desiredPos = CameraMath.ComputeTargetPositionWithPan(
+                target.position, _currentPanXZ, 120f, s.cameraPitch, s.cameraDistance,
                 tuning.forwardOffset, ArenaLayoutData.HalfExtent, tuning.arenaClampMargin);
 
-            // Strictly lock camera position when airborne so high-speed cable flight has zero lag/jitter.
-            if (curState == HeroMotionState.AirborneCable || curState == HeroMotionState.Dashing)
+            // Strictly lock camera position when airborne or actively panning so tracking has zero lag/jitter.
+            if (curState == HeroMotionState.AirborneCable || curState == HeroMotionState.Dashing || (inputRouter != null && inputRouter.IsCameraPanning))
             {
                 transform.position = desiredPos;
             }

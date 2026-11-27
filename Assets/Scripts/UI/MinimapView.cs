@@ -3,6 +3,7 @@ using Stickman.Hero;
 using Stickman.Input;
 using Stickman.Practice;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Stickman.UI
@@ -10,8 +11,9 @@ namespace Stickman.UI
     /// <summary>
     /// Live top-right MOBA minimap generated once from <see cref="ArenaLayoutData"/> and updated with
     /// pooled UI markers (hero dot, active cables, dummies, drill/checkpoint target) with zero GC.
+    /// Supports touch/drag camera peeking across the entire arena.
     /// </summary>
-    public sealed class MinimapView : MonoBehaviour
+    public sealed class MinimapView : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
     {
         const int TexSize = 256;
 
@@ -24,13 +26,17 @@ namespace Stickman.UI
 
         HeroController _hero;
         PracticeManager _practice;
+        InputRouter _inputRouter;
         float _sizePx = 220f;
+        bool _hasPointer;
+        int _pointerId;
 
-        public void Initialize(HeroController hero, PracticeManager practice, float sizePx)
+        public void Initialize(HeroController hero, PracticeManager practice, float sizePx, InputRouter inputRouter = null)
         {
             _hero = hero;
             _practice = practice;
             _sizePx = sizePx;
+            _inputRouter = inputRouter;
             _root = GetComponent<RectTransform>();
 
             _mapImage = gameObject.AddComponent<RawImage>();
@@ -106,6 +112,43 @@ namespace Stickman.UI
             float nx = Mathf.Clamp01((worldPos.x + half) / (2f * half));
             float ny = Mathf.Clamp01((worldPos.z + half) / (2f * half));
             return new Vector2((nx - 0.5f) * _sizePx, (ny - 0.5f) * _sizePx);
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            if (_hasPointer || _inputRouter == null || _inputRouter.BlockGameplayInput) return;
+            _hasPointer = true;
+            _pointerId = eventData.pointerId;
+            UpdateMinimapPeek(eventData);
+        }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            if (!_hasPointer || eventData.pointerId != _pointerId) return;
+            UpdateMinimapPeek(eventData);
+        }
+
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            if (!_hasPointer || eventData.pointerId != _pointerId) return;
+            _hasPointer = false;
+            _inputRouter?.SetCameraPan(Vector3.zero, false);
+        }
+
+        void UpdateMinimapPeek(PointerEventData eventData)
+        {
+            if (_root == null || _hero == null || _inputRouter == null) return;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_root, eventData.position, eventData.pressEventCamera, out Vector2 localPt))
+                return;
+
+            // Root pivot is top-right (1, 1): x in [-_sizePx, 0], y in [-_sizePx, 0]
+            float nx = Mathf.Clamp01(1f + localPt.x / Mathf.Max(1f, _sizePx));
+            float ny = Mathf.Clamp01(1f + localPt.y / Mathf.Max(1f, _sizePx));
+            float half = ArenaLayoutData.HalfExtent;
+            float wx = (nx - 0.5f) * (2f * half);
+            float wz = (ny - 0.5f) * (2f * half);
+            Vector3 offset = new Vector3(wx - _hero.transform.position.x, 0f, wz - _hero.transform.position.z);
+            _inputRouter.SetCameraPan(offset, true);
         }
 
         RectTransform CreateMarker(string name, Color color, float size)

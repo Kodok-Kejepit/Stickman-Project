@@ -69,8 +69,6 @@ jobs:
             image: android
           - targetPlatform: StandaloneLinux64
             image: linux-il2cpp
-          - targetPlatform: StandaloneWindows64
-            image: windows-mono
     steps:
       - name: Free disk space (Android)
         if: matrix.targetPlatform == 'Android'

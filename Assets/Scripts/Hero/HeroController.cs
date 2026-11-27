@@ -12,6 +12,7 @@ namespace Stickman.Hero
     public sealed class HeroController : MonoBehaviour
     {
         [SerializeField] HeroTuning tuning;
+        [SerializeField] InputRouter inputRouter;
 
         HeroMotor _motor;
         CableSkill _cable;
@@ -19,7 +20,6 @@ namespace Stickman.Hero
         DashSkill _dash;
         BasicAttack _basic;
         StickmanRig _rig;
-        InputRouter _input;
         EnergyPool _energy;
 
         public HeroTuning Tuning => tuning;
@@ -38,13 +38,13 @@ namespace Stickman.Hero
             set { if (_energy != null) _energy.InfiniteEnergy = value; }
         }
 
-        public void SetReferences(HeroTuning heroTuning, InputRouter inputRouter)
+        public void SetReferences(HeroTuning heroTuning, InputRouter router)
         {
             tuning = heroTuning;
-            _input = inputRouter;
+            inputRouter = router;
         }
 
-        public void AttachInput(InputRouter inputRouter) => _input = inputRouter;
+        public void AttachInput(InputRouter router) => inputRouter = router;
 
         void Awake()
         {
@@ -54,6 +54,7 @@ namespace Stickman.Hero
             _dash = GetComponent<DashSkill>();
             _basic = GetComponent<BasicAttack>();
             _rig = GetComponent<StickmanRig>();
+            if (inputRouter == null) inputRouter = FindFirstObjectByType<InputRouter>();
 
             if (tuning != null)
             {
@@ -73,35 +74,36 @@ namespace Stickman.Hero
             float dt = Time.deltaTime;
             float now = Time.time;
             if (dt <= 0f || tuning == null) return;
+            if (inputRouter == null) inputRouter = FindFirstObjectByType<InputRouter>();
 
             _energy.Tick(dt, _motor.IsInBlueBase);
             _spin.TickCooldown(dt, NoCooldown);
             _dash.TickCooldown(dt, NoCooldown);
             _basic.TickCooldown(dt, NoCooldown);
 
-            Vector2 moveInput = _input != null ? _input.MoveVector : Vector2.zero;
+            Vector2 moveInput = inputRouter != null ? inputRouter.MoveVector : Vector2.zero;
 
             // Execute skill inputs immediately on the frame received (zero input lag).
-            if (_input != null)
+            if (inputRouter != null)
             {
-                if (_input.ConsumeCableCast(out Vector3 cableDir))
+                if (inputRouter.ConsumeCableCast(out Vector3 cableDir))
                 {
                     if (_dash.IsDashing) _dash.CancelDash();
                     _cable.TryCast(transform.position, cableDir, _energy, now, NoCooldown);
                 }
 
-                if (_input.ConsumeSpinPressed())
+                if (inputRouter.ConsumeSpinPressed())
                 {
                     bool air = State == HeroMotionState.AirborneCable || State == HeroMotionState.AirborneGlide;
                     _spin.TryManualSpin(transform.position, _motor.Velocity.magnitude, air, _energy, _rig, now, NoCooldown);
                 }
 
-                if (_input.ConsumeUltPressed())
+                if (inputRouter.ConsumeUltPressed())
                 {
                     _dash.TryTrigger(transform.position, _motor.FacingDir, NoCooldown);
                 }
 
-                if (_input.ConsumeBasicPressed())
+                if (inputRouter.ConsumeBasicPressed())
                 {
                     bool air = State == HeroMotionState.AirborneCable || State == HeroMotionState.AirborneGlide;
                     _basic.TryTrigger(transform.position, air, _rig, now, NoCooldown);
@@ -165,9 +167,9 @@ namespace Stickman.Hero
             }
 
             // Update aim guide when aiming Skill 2.
-            bool showAim = SettingsStore.Current.showAimGuide && _input != null && _input.IsAimingCable;
-            _cable.UpdateAimGuide(showAim, transform.position, _input != null ? _input.AimDirectionXZ : Vector3.zero,
-                _input != null && _input.IsCancellingCable);
+            bool showAim = SettingsStore.Current.showAimGuide && inputRouter != null && inputRouter.IsAimingCable;
+            _cable.UpdateAimGuide(showAim, transform.position, inputRouter != null ? inputRouter.AimDirectionXZ : Vector3.zero,
+                inputRouter != null && inputRouter.IsCancellingCable);
 
             _rig.UpdateVisual(State, _motor.Velocity.magnitude, dt);
         }

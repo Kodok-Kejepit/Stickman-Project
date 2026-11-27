@@ -33,6 +33,7 @@ namespace Stickman.Core
                 case "settings.fps": return en ? "Target FPS" : "Target FPS";
                 case "settings.pitch": return en ? "Camera Pitch" : "Sudut Kamera";
                 case "settings.zoom": return en ? "Camera Distance" : "Jarak Kamera";
+                case "settings.pansens": return en ? "Camera Pan Sensitivity" : "Sensitivitas Geser Kamera";
                 case "settings.sens": return en ? "Aim Sensitivity" : "Sensitivitas Aim";
                 case "settings.deadzone": return en ? "Joystick Deadzone" : "Deadzone Joystick";
                 case "settings.aimguide": return en ? "Show Aim Guide" : "Garis Bantu Aim";

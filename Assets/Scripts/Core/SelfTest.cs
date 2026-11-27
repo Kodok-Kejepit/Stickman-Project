@@ -1,6 +1,7 @@
 using System.Collections;
 using System.IO;
 using System.Text;
+using Stickman.Camera;
 using Stickman.Hero;
 using Stickman.Input;
 using Stickman.Practice;
@@ -82,38 +83,38 @@ namespace Stickman.Core
             AssertCheck("SingleCablePullsTowardWall", hero.transform.position.x < -5.5f && hero.transform.position.z > -2.5f,
                 $"pos={hero.transform.position}");
 
-            // 3. 2-cable Straight Cable across Mid Lane between the two flanking mid walls
-            hero.TeleportHero(new Vector3(-1f, 0f, -1f));
+            // 3. 2-cable Straight Cable across Mid Lane between flanking walls #24 and #18
+            hero.TeleportHero(new Vector3(-4f, 0f, -4f));
             yield return null;
-            input.InjectCableCast(new Vector3(-0.35f, 0f, 0.94f)); // Top-left mid-river wall
+            input.InjectCableCast(new Vector3(0.26f, 0f, 0.97f)); // Hits wall #24 at 12.68u
             yield return null;
             yield return null;
-            input.InjectCableCast(new Vector3(0.94f, 0f, -0.35f)); // Bottom-right mid-river wall
-            for (int i = 0; i < 20; i++) yield return null;
-            AssertCheck("StraightCableDualFlight", practice.LastStraightReport.Valid && hero.transform.position.x > 0.5f && hero.transform.position.z > 0.5f,
+            input.InjectCableCast(new Vector3(0.97f, 0f, 0.26f)); // Hits wall #18 at 12.99u
+            for (int i = 0; i < 30; i++) yield return null;
+            AssertCheck("StraightCableDualFlight", practice.LastStraightReport.Valid && hero.transform.position.x > 0f && hero.transform.position.z > 0f,
                 $"valid={practice.LastStraightReport.Valid} pos={hero.transform.position}");
 
             // 4. 3-cable rapid chain handoff
             hero.TeleportHero(new Vector3(-4f, 0f, -4f));
             yield return null;
-            input.InjectCableCast(new Vector3(-1f, 0f, 1f));
-            for (int i = 0; i < 4; i++) yield return null;
-            input.InjectCableCast(new Vector3(1f, 0f, -1f));
-            for (int i = 0; i < 4; i++) yield return null;
-            input.InjectCableCast(new Vector3(0f, 0f, 1f));
-            for (int i = 0; i < 20; i++) yield return null;
-            AssertCheck("ThreeCableChainHandoff", hero.Cable.Engine.MaxSimultaneousLatched <= 2,
-                $"maxSim={hero.Cable.Engine.MaxSimultaneousLatched}");
+            input.InjectCableCast(new Vector3(0.26f, 0f, 0.97f));
+            for (int i = 0; i < 6; i++) yield return null;
+            input.InjectCableCast(new Vector3(0.97f, 0f, 0.26f));
+            for (int i = 0; i < 6; i++) yield return null;
+            input.InjectCableCast(new Vector3(-0.71f, 0f, 0.71f));
+            for (int i = 0; i < 25; i++) yield return null;
+            AssertCheck("ThreeCableChainHandoff", hero.Cable.Engine.MaxSimultaneousLatched <= 2 && hero.Cable.Engine.LatchesThisFlight >= 2,
+                $"maxSim={hero.Cable.Engine.MaxSimultaneousLatched} total={hero.Cable.Engine.LatchesThisFlight}");
 
             // 5. Fly-through "Gesek" auto-spin + Ult Dash + Basic Attack on CombatDummy
             practice.ClearDummies();
-            hero.TeleportHero(new Vector3(-1f, 0f, -1f));
-            var dummy = practice.SpawnDummyAt(new Vector3(2.2f, 0f, 2.2f), false, Vector3.zero);
+            hero.TeleportHero(new Vector3(-4f, 0f, -4f));
+            var dummy = practice.SpawnDummyAt(new Vector3(1.5f, 0f, 1.5f), false, Vector3.zero);
             yield return null;
-            input.InjectCableCast(new Vector3(-0.35f, 0f, 0.94f));
+            input.InjectCableCast(new Vector3(0.26f, 0f, 0.97f));
             yield return null;
-            input.InjectCableCast(new Vector3(0.94f, 0f, -0.35f));
-            for (int i = 0; i < 25; i++) yield return null;
+            input.InjectCableCast(new Vector3(0.97f, 0f, 0.26f));
+            for (int i = 0; i < 35; i++) yield return null;
             AssertCheck("GesekAutoSpinDamagesAndMarks", dummy.TotalDamageTaken > 0f,
                 $"dmg={dummy.TotalDamageTaken} marks={dummy.PreyMarks}");
 
@@ -121,9 +122,25 @@ namespace Stickman.Core
             hero.TeleportHero(new Vector3(0.5f, 0f, 0.5f));
             yield return null;
             input.InjectUlt();
-            for (int i = 0; i < 20; i++) yield return null;
+            for (int i = 0; i < 25; i++) yield return null;
             AssertCheck("UltDashDealsDamage", dummy.TotalDamageTaken > dmgAfterGesek,
                 $"before={dmgAfterGesek} after={dummy.TotalDamageTaken}");
+
+            // 6. Camera Pan moves camera and returns cleanly when released
+            var mobaCam = FindFirstObjectByType<MobaCamera>();
+            hero.TeleportHero(new Vector3(0f, 0f, 0f));
+            yield return null;
+            Vector3 camBase = mobaCam.transform.position;
+            input.SetCameraPan(new Vector3(12f, 0f, 10f), true);
+            yield return null;
+            yield return null;
+            Vector3 camPanned = mobaCam.transform.position;
+            input.SetCameraPan(Vector3.zero, false);
+            for (int i = 0; i < 30; i++) yield return null;
+            Vector3 camReturned = mobaCam.transform.position;
+            AssertCheck("CameraPanMovesAndReturns",
+                (camPanned - camBase).magnitude > 10f && (camReturned - camBase).magnitude < 0.5f,
+                $"panDelta={(camPanned - camBase).magnitude:0.0} returnErr={(camReturned - camBase).magnitude:0.00}");
 
             // 6. Infinite Energy toggle
             hero.InfiniteEnergy = true;

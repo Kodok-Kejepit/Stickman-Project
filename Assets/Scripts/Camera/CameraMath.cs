@@ -29,6 +29,27 @@ namespace Stickman.Camera
             return new Vector3(fx + backDir.x, backDir.y, fz + backDir.z);
         }
 
+        /// <summary>Computes camera position with free-pan XZ offset clamped to <paramref name="maxPanRadius"/>.</summary>
+        public static Vector3 ComputeTargetPositionWithPan(
+            Vector3 heroPos,
+            Vector3 panOffsetXZ,
+            float maxPanRadius,
+            float pitchDeg,
+            float distance,
+            float forwardOffset,
+            float arenaHalfExtent,
+            float clampMargin)
+        {
+            panOffsetXZ.y = 0f;
+            float maxR = Mathf.Max(0f, maxPanRadius);
+            if (panOffsetXZ.magnitude > maxR && maxR > 0.001f)
+                panOffsetXZ = panOffsetXZ.normalized * maxR;
+            else if (maxR <= 0.001f)
+                panOffsetXZ = Vector3.zero;
+
+            return ComputeTargetPosition(heroPos + panOffsetXZ, pitchDeg, distance, forwardOffset, arenaHalfExtent, clampMargin);
+        }
+
         public static Quaternion ComputeRotation(float pitchDeg)
         {
             return Quaternion.Euler(Mathf.Clamp(pitchDeg, 40f, 75f), 0f, 0f);

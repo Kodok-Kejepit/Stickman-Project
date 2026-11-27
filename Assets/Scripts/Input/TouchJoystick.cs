@@ -19,7 +19,8 @@ namespace Stickman.Input
 
         Vector2 _restLocalPos;
         float _maxRadius = 110f;
-        int _activePointerId = -1;
+        bool _hasPointer;
+        int _activePointerId;
         Vector2 _centerLocalPos;
 
         public Vector2 Value { get; private set; }
@@ -43,13 +44,14 @@ namespace Stickman.Input
             if (_ring != null)
             {
                 _ring.localScale = Vector3.one * scale;
-                if (_activePointerId < 0) _ring.anchoredPosition = _restLocalPos;
+                if (!_hasPointer) _ring.anchoredPosition = _restLocalPos;
             }
         }
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            if (_activePointerId >= 0) return;
+            if (_hasPointer) return;
+            _hasPointer = true;
             _activePointerId = eventData.pointerId;
 
             if (RectTransformUtility.ScreenPointToLocalPointInRectangle(_zone, eventData.position, eventData.pressEventCamera, out Vector2 localPt))
@@ -63,7 +65,7 @@ namespace Stickman.Input
 
         public void OnDrag(PointerEventData eventData)
         {
-            if (eventData.pointerId != _activePointerId) return;
+            if (!_hasPointer || eventData.pointerId != _activePointerId) return;
             if (RectTransformUtility.ScreenPointToLocalPointInRectangle(_zone, eventData.position, eventData.pressEventCamera, out Vector2 localPt))
             {
                 UpdateKnob(localPt);
@@ -72,8 +74,8 @@ namespace Stickman.Input
 
         public void OnPointerUp(PointerEventData eventData)
         {
-            if (eventData.pointerId != _activePointerId) return;
-            _activePointerId = -1;
+            if (!_hasPointer || eventData.pointerId != _activePointerId) return;
+            _hasPointer = false;
             Value = Vector2.zero;
             ResetVisual();
         }

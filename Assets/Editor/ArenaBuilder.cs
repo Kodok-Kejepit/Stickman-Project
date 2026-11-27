@@ -68,22 +68,31 @@ namespace Stickman.EditorTools
             if (AssetDatabase.LoadAssetAtPath<Object>(MeshesAssetPath) != null)
                 AssetDatabase.DeleteAsset(MeshesAssetPath);
 
-            bool assetCreated = false;
+            // Base corner platforms clipped cleanly inside [-60, +60]
+            var blueBasePoly = new[]
+            {
+                new Vector2(-60f, -60f), new Vector2(-24f, -60f), new Vector2(-24f, -50f),
+                new Vector2(-50f, -24f), new Vector2(-60f, -24f)
+            };
+            var redBasePoly = new[]
+            {
+                new Vector2(60f, 60f), new Vector2(24f, 60f), new Vector2(24f, 50f),
+                new Vector2(50f, 24f), new Vector2(60f, 24f)
+            };
+            Mesh blueBaseMesh = PolygonMeshBuilder.BuildExtrudedMesh("BlueBaseMesh", blueBasePoly, 0.015f, 0.02f, includeSides: false);
+            Mesh redBaseMesh = PolygonMeshBuilder.BuildExtrudedMesh("RedBaseMesh", redBasePoly, 0.015f, 0.02f, includeSides: false);
+            AssetDatabase.CreateAsset(blueBaseMesh, MeshesAssetPath);
+            AssetDatabase.AddObjectToAsset(redBaseMesh, MeshesAssetPath);
+            CreateStaticMesh("Base_Blue", arenaRoot.transform, blueBaseMesh, blueBaseMat);
+            CreateStaticMesh("Base_Red", arenaRoot.transform, redBaseMesh, redBaseMat);
+
             var wallsParent = new GameObject("Walls");
             wallsParent.transform.SetParent(arenaRoot.transform, false);
 
             for (int i = 0; i < ArenaLayoutData.Walls.Length; i++)
             {
                 Mesh wallMesh = PolygonMeshBuilder.BuildExtrudedMesh("WallMesh_" + i, ArenaLayoutData.Walls[i], 0f, ArenaLayoutData.WallHeight);
-                if (!assetCreated)
-                {
-                    AssetDatabase.CreateAsset(wallMesh, MeshesAssetPath);
-                    assetCreated = true;
-                }
-                else
-                {
-                    AssetDatabase.AddObjectToAsset(wallMesh, MeshesAssetPath);
-                }
+                AssetDatabase.AddObjectToAsset(wallMesh, MeshesAssetPath);
 
                 var wGo = new GameObject("Wall_" + i);
                 wGo.transform.SetParent(wallsParent.transform, false);
@@ -161,7 +170,7 @@ namespace Stickman.EditorTools
             cam.backgroundColor = new Color(0.06f, 0.09f, 0.12f);
             cam.fieldOfView = camTuning != null ? camTuning.verticalFov : 32f;
             var mobaCam = camGo.AddComponent<MobaCamera>();
-            mobaCam.SetReferences(camTuning, heroGo.transform, heroCtrl);
+            mobaCam.SetReferences(camTuning, heroGo.transform, heroCtrl, inputRouter);
             mobaCam.SnapNow();
 
             // Practice Manager & HUD
@@ -197,10 +206,17 @@ namespace Stickman.EditorTools
             CreateFlatQuad("River_Channel", parent, new Vector3(0f, 0.02f, 0f), -45f, new Vector3(11.5f, 0.02f, 110f), 0f, riverMat);
             CreateFlatDisc("River_TurtleBasin", parent, new Vector3(-21f, 0.022f, 21f), 20f, riverMat);
             CreateFlatDisc("River_LordBasin", parent, new Vector3(21f, 0.022f, -21f), 20f, riverMat);
+        }
 
-            // Blue & Red Base platforms
-            CreateFlatQuad("Base_Blue", parent, new Vector3(-47f, 0.025f, -47f), 45f, new Vector3(36f, 0.02f, 36f), 0f, blueMat);
-            CreateFlatQuad("Base_Red", parent, new Vector3(47f, 0.025f, 47f), 45f, new Vector3(36f, 0.02f, 36f), 0f, redMat);
+        static void CreateStaticMesh(string name, Transform parent, Mesh mesh, Material mat)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.isStatic = true;
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var mr = go.AddComponent<MeshRenderer>();
+            mr.sharedMaterial = mat;
+            mr.shadowCastingMode = ShadowCastingMode.Off;
         }
 
         static void CreateFlatQuad(string name, Transform parent, Vector3 pos, float yawDeg, Vector3 scale, float yCenter, Material mat)

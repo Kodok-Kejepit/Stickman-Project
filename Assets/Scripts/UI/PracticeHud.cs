@@ -67,6 +67,7 @@ namespace Stickman.UI
 
         // Pooled damage numbers
         readonly FloatingDamage[] _dmgPool = new FloatingDamage[16];
+        RectTransform _dmgRoot;
         int _dmgCursor;
 
         // Dirty-checked banner cache
@@ -103,6 +104,11 @@ namespace Stickman.UI
             CombatDummy.OnAnyDamageDealt -= SpawnDamagePopup;
         }
 
+        void Start()
+        {
+            ApplySettingsToHud();
+        }
+
         void BuildHud()
         {
             var canvas = gameObject.AddComponent<Canvas>();
@@ -113,7 +119,7 @@ namespace Stickman.UI
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 0.5f;
+            scaler.matchWidthOrHeight = 1.0f;
 
             gameObject.AddComponent<GraphicRaycaster>();
 
@@ -125,14 +131,29 @@ namespace Stickman.UI
             _safeArea.offsetMin = _safeArea.offsetMax = Vector2.zero;
             safeGo.AddComponent<SafeAreaFitter>();
 
-            BuildTopLeftModesAndTools();
-            BuildTopCenterBanner();
-            BuildTopRightMinimapAndSettings();
-            BuildEnergyBar();
+            // Bottom-most layer: empty-space camera pan pad -> touch controls -> HUD panels -> modals
+            BuildCameraPanPad();
             BuildTouchControls();
             BuildDamagePool();
+            BuildEnergyBar();
+            BuildTopCenterBanner();
+            BuildTopLeftModesAndTools();
+            BuildTopRightMinimapAndSettings();
             BuildOverlays();
             ApplySettingsToHud();
+        }
+
+        void BuildCameraPanPad()
+        {
+            var panGo = new GameObject("CameraPanPad");
+            panGo.transform.SetParent(_safeArea, false);
+            var rt = panGo.AddComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
+            var img = panGo.AddComponent<Image>();
+            img.color = new Color(0f, 0f, 0f, 0f);
+            panGo.AddComponent<CameraPanPad>().Initialize(inputRouter);
         }
 
         void BuildTopLeftModesAndTools()
@@ -218,7 +239,7 @@ namespace Stickman.UI
             mrt.pivot = new Vector2(1f, 1f);
             mrt.anchoredPosition = new Vector2(-16f, -16f);
             mrt.sizeDelta = new Vector2(mapSize, mapSize);
-            mapGo.AddComponent<MinimapView>().Initialize(hero, practice, mapSize);
+            mapGo.AddComponent<MinimapView>().Initialize(hero, practice, mapSize, inputRouter);
 
             var setRt = CreatePanel("SettingsBtn", _safeArea, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-246f, -16f), new Vector2(120f, 46f));
             setRt.pivot = new Vector2(1f, 1f);
@@ -232,7 +253,7 @@ namespace Stickman.UI
 
         void BuildEnergyBar()
         {
-            var bar = CreatePanel("EnergyBar", _safeArea, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 24f), new Vector2(440f, 36f));
+            var bar = CreatePanel("EnergyBar", _safeArea, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 38f), new Vector2(440f, 36f));
             bar.pivot = new Vector2(0.5f, 0f);
             _energyFrame = bar.gameObject.AddComponent<Image>();
             _energyFrame.color = new Color(0.08f, 0.10f, 0.14f, 0.90f);
@@ -270,12 +291,12 @@ namespace Stickman.UI
             trt.offsetMin = trt.offsetMax = Vector2.zero;
             _touchRoot = touchGo;
 
-            // Left floating joystick hit zone
+            // Left floating joystick hit zone (leaves top-left & upper center free for CameraPanPad)
             var joyZone = new GameObject("JoystickZone");
             joyZone.transform.SetParent(trt, false);
             var jzRt = joyZone.AddComponent<RectTransform>();
             jzRt.anchorMin = Vector2.zero;
-            jzRt.anchorMax = new Vector2(0.42f, 0.78f);
+            jzRt.anchorMax = new Vector2(0.36f, 0.60f);
             jzRt.offsetMin = jzRt.offsetMax = Vector2.zero;
             var jzImg = joyZone.AddComponent<Image>();
             jzImg.color = new Color(0f, 0f, 0f, 0f);
@@ -339,13 +360,14 @@ namespace Stickman.UI
 
         void BuildDamagePool()
         {
-            var poolRoot = CreatePanel("DamagePopups", _safeArea, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            _dmgRoot = CreatePanel("DamagePopups", _safeArea, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            _dmgRoot.offsetMin = _dmgRoot.offsetMax = Vector2.zero;
             for (int i = 0; i < _dmgPool.Length; i++)
             {
                 var go = new GameObject("Dmg_" + i);
-                go.transform.SetParent(poolRoot, false);
+                go.transform.SetParent(_dmgRoot, false);
                 var rt = go.AddComponent<RectTransform>();
-                rt.anchorMin = rt.anchorMax = new Vector2(0f, 0f);
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
                 rt.sizeDelta = new Vector2(180f, 44f);
                 var t = go.AddComponent<Text>();
                 t.font = _font;
@@ -500,8 +522,10 @@ namespace Stickman.UI
                     var r = practice.LastStraightReport;
                     if (r.Valid)
                         _bannerText.text = $"STRAIGHT CABLE | Angle {r.AngleBetweenDeg:0}° · Δt {r.DeltaTimeMs:0}ms · Chain {chain}";
+                    else if (inputRouter != null && inputRouter.TouchUiEnabled)
+                        _bannerText.text = "FREE PRACTICE | Ketuk Kabel = Quick · Geser = Aim · Geser Layar = Pan";
                     else
-                        _bannerText.text = "FREE PRACTICE | WASD Move · E Cable · Q Spin · R Ult";
+                        _bannerText.text = "FREE PRACTICE | WASD Move · E Cable · Q Spin · R Ult · RMB Pan";
                 }
             }
         }
@@ -521,7 +545,7 @@ namespace Stickman.UI
         void UpdateDamagePopups(float dt)
         {
             if (_mainCam == null) _mainCam = UnityEngine.Camera.main;
-            if (_mainCam == null) return;
+            if (_mainCam == null || _dmgRoot == null) return;
 
             for (int i = 0; i < _dmgPool.Length; i++)
             {
@@ -536,11 +560,9 @@ namespace Stickman.UI
                 else
                 {
                     Vector3 sp = _mainCam.WorldToScreenPoint(d.WorldPos);
-                    if (sp.z > 0f)
+                    if (sp.z > 0f && RectTransformUtility.ScreenPointToLocalPointInRectangle(_dmgRoot, sp, null, out Vector2 lp))
                     {
-                        float scaleX = 1920f / Mathf.Max(1, Screen.width);
-                        float scaleY = 1080f / Mathf.Max(1, Screen.height);
-                        d.Rect.anchoredPosition = new Vector2(sp.x * scaleX, sp.y * scaleY);
+                        d.Rect.anchoredPosition = lp;
                     }
                 }
                 _dmgPool[i] = d;

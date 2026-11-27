@@ -73,38 +73,39 @@ namespace Stickman.Core
 
             // 00: Top-down full map overview proving all 40 walls + 3 lanes + river + pits + turrets match
             if (cam != null) cam.SetTopDownOverview(true);
+            yield return null;
             yield return Capture("00_topdown_map.png");
             if (cam != null) cam.SetTopDownOverview(false);
 
             // 01: Mid lane overview with stickman + twin swords + touch UI + minimap
-            hero.TeleportHero(new Vector3(-2.5f, 0f, -2.5f));
+            hero.TeleportHero(new Vector3(-4.0f, 0f, -4.0f));
             yield return Capture("01_overview_arena.png");
 
-            // 02: Aim Cable guide preview toward mid-river wall
-            input.InjectAimPreview(true, new Vector3(-0.35f, 0f, 0.94f));
+            // 02: Aim Cable guide preview toward wall #24 (12.68u)
+            input.InjectAimPreview(true, new Vector3(0.26f, 0f, 0.97f));
             yield return Capture("02_aim_cable.png");
             input.InjectAimPreview(false, Vector3.zero);
 
             // 03: Active 2-cable Straight Cable mid-flight across Mid River
-            hero.TeleportHero(new Vector3(-3.0f, 0f, -3.0f));
+            hero.TeleportHero(new Vector3(-4.0f, 0f, -4.0f));
             yield return null;
-            input.InjectCableCast(new Vector3(-0.30f, 0f, 0.95f));
+            input.InjectCableCast(new Vector3(0.26f, 0f, 0.97f));
             yield return null;
-            input.InjectCableCast(new Vector3(0.95f, 0f, -0.30f));
-            for (int i = 0; i < 24 && (hero.State != HeroMotionState.AirborneCable || hero.Cable.ActiveLatchCount < 2); i++)
+            input.InjectCableCast(new Vector3(0.97f, 0f, 0.26f));
+            for (int i = 0; i < 30 && (hero.State != HeroMotionState.AirborneCable || hero.Cable.ActiveLatchCount < 2); i++)
                 yield return null;
             yield return null;
             yield return Capture("03_straight_cable.png");
 
             // 04: Fly-through "Gesek" Spin + Prey Mark + floating damage on dummy
             practice.ClearDummies();
-            hero.TeleportHero(new Vector3(-1.8f, 0f, -1.8f));
-            var dummy = practice.SpawnDummyAt(new Vector3(1.2f, 0f, 1.2f), false, Vector3.zero);
+            hero.TeleportHero(new Vector3(-4.0f, 0f, -4.0f));
+            var dummy = practice.SpawnDummyAt(new Vector3(1.5f, 0f, 1.5f), false, Vector3.zero);
             yield return null;
-            input.InjectCableCast(new Vector3(-0.35f, 0f, 0.94f));
+            input.InjectCableCast(new Vector3(0.26f, 0f, 0.97f));
             yield return null;
-            input.InjectCableCast(new Vector3(0.94f, 0f, -0.35f));
-            for (int i = 0; i < 30 && dummy.TotalDamageTaken <= 0f; i++)
+            input.InjectCableCast(new Vector3(0.97f, 0f, 0.26f));
+            for (int i = 0; i < 35 && dummy.TotalDamageTaken <= 0f; i++)
                 yield return null;
             yield return null;
             yield return Capture("04_gesek_dummy.png");
@@ -130,12 +131,12 @@ namespace Stickman.Core
             {
                 if (i == 10 || i == 90 || i == 170)
                 {
-                    hero.TeleportHero(new Vector3(-3.0f, 0f, -3.0f));
-                    input.InjectCableCast(new Vector3(-0.35f, 0f, 0.94f));
+                    hero.TeleportHero(new Vector3(-4.0f, 0f, -4.0f));
+                    input.InjectCableCast(new Vector3(0.26f, 0f, 0.97f));
                 }
                 if (i == 12 || i == 92 || i == 172)
                 {
-                    input.InjectCableCast(new Vector3(0.94f, 0f, -0.35f));
+                    input.InjectCableCast(new Vector3(0.97f, 0f, 0.26f));
                 }
 
                 yield return null;

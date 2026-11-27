@@ -29,5 +29,18 @@ namespace Stickman.Tests
             Assert.That(corner.x, Is.EqualTo(54f).Within(0.01f));
             Assert.That(corner.z, Is.EqualTo(54f + expectedBack.z).Within(0.01f));
         }
+
+        [Test]
+        public void PanShiftsCameraWithinRadiusAndArenaBounds()
+        {
+            Vector3 zero = CameraMath.ComputeTargetPosition(Vector3.zero, 55f, 28f, 2f, 60f, 6f);
+            Vector3 panned = CameraMath.ComputeTargetPositionWithPan(Vector3.zero, new Vector3(12f, 5f, -8f), 28f, 55f, 28f, 2f, 60f, 6f);
+            Assert.That(panned.x - zero.x, Is.EqualTo(12f).Within(0.01f));
+            Assert.That(panned.y - zero.y, Is.EqualTo(0f).Within(0.01f));
+            Assert.That(panned.z - zero.z, Is.EqualTo(-8f).Within(0.01f));
+
+            Vector3 clampedRad = CameraMath.ComputeTargetPositionWithPan(Vector3.zero, new Vector3(100f, 0f, 0f), 20f, 55f, 28f, 2f, 60f, 6f);
+            Assert.That(clampedRad.x - zero.x, Is.EqualTo(20f).Within(0.01f));
+        }
     }
 }

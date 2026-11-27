@@ -22,14 +22,15 @@ namespace Stickman.Input
         Image _bgImage;
         Image _cancelImage;
 
-        int _pointerId = -1;
+        bool _hasPointer;
+        int _pointerId;
         Vector2 _downScreenPos;
         bool _draggedOutsideTap;
         bool _hasAimDir;
         Vector3 _aimDirXZ;
         bool _isCancelling;
 
-        public bool IsAiming => _pointerId >= 0 && _draggedOutsideTap;
+        public bool IsAiming => _hasPointer && _draggedOutsideTap;
         public bool IsCancelling => _isCancelling;
         public Vector3 AimDirectionXZ => _aimDirXZ;
 
@@ -47,7 +48,8 @@ namespace Stickman.Input
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            if (_pointerId >= 0) return;
+            if (_hasPointer) return;
+            _hasPointer = true;
             _pointerId = eventData.pointerId;
             _downScreenPos = eventData.position;
             _draggedOutsideTap = false;
@@ -59,7 +61,7 @@ namespace Stickman.Input
 
         public void OnDrag(PointerEventData eventData)
         {
-            if (eventData.pointerId != _pointerId) return;
+            if (!_hasPointer || eventData.pointerId != _pointerId) return;
 
             Vector2 screenDelta = eventData.position - _downScreenPos;
             float sens = SettingsStore.Current.aimSensitivity;
@@ -98,8 +100,8 @@ namespace Stickman.Input
 
         public void OnPointerUp(PointerEventData eventData)
         {
-            if (eventData.pointerId != _pointerId) return;
-            _pointerId = -1;
+            if (!_hasPointer || eventData.pointerId != _pointerId) return;
+            _hasPointer = false;
 
             bool cancel = _isCancelling;
             bool quickCast = !_draggedOutsideTap || !_hasAimDir;

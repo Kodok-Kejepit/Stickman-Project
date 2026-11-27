@@ -80,6 +80,8 @@ namespace Stickman.UI
             var handle = new GameObject("Handle").AddComponent<Image>();
             handle.transform.SetParent(sliderGo.transform, false);
             handle.color = Color.white;
+            handle.rectTransform.anchorMin = new Vector2(0f, 0.5f);
+            handle.rectTransform.anchorMax = new Vector2(0f, 0.5f);
             handle.rectTransform.sizeDelta = new Vector2(22f, 28f);
 
             _scaleSlider = sliderGo.AddComponent<Slider>();

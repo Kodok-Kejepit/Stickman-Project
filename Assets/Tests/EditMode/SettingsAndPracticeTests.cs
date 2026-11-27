@@ -14,6 +14,7 @@ namespace Stickman.Tests
             s.targetFps = 90;
             s.cameraPitch = 62f;
             s.cameraDistance = 30f;
+            s.cameraPanSensitivity = 1.85f;
             s.cableOffset = new Vector2(85f, -45f);
             s.cableScale = 1.25f;
             s.language = "en";
@@ -24,13 +25,15 @@ namespace Stickman.Tests
             Assert.That(loaded.targetFps, Is.EqualTo(90));
             Assert.That(loaded.cameraPitch, Is.EqualTo(62f).Within(0.01f));
             Assert.That(loaded.cameraDistance, Is.EqualTo(30f).Within(0.01f));
+            Assert.That(loaded.cameraPanSensitivity, Is.EqualTo(1.85f).Within(0.01f));
             Assert.That(loaded.cableOffset.x, Is.EqualTo(85f).Within(0.01f));
             Assert.That(loaded.cableOffset.y, Is.EqualTo(-45f).Within(0.01f));
             Assert.That(loaded.cableScale, Is.EqualTo(1.25f).Within(0.01f));
             Assert.That(loaded.language, Is.EqualTo("en"));
 
-            SettingsData clamped = SettingsStore.FromJson("{\"cameraPitch\":999,\"targetFps\":77,\"language\":\"xx\"}");
+            SettingsData clamped = SettingsStore.FromJson("{\"cameraPitch\":999,\"cameraPanSensitivity\":99,\"targetFps\":77,\"language\":\"xx\"}");
             Assert.That(clamped.cameraPitch, Is.EqualTo(65f).Within(0.01f));
+            Assert.That(clamped.cameraPanSensitivity, Is.EqualTo(2.5f).Within(0.01f));
             Assert.That(clamped.targetFps, Is.EqualTo(0));
             Assert.That(clamped.language, Is.EqualTo("id"));
         }

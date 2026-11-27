@@ -8,6 +8,7 @@ namespace Stickman.Input
     /// Unified input router reading BOTH mobile multitouch UI and PC Input System keyboard/mouse.
     /// Zero legacy <c>UnityEngine.Input</c> references, zero per-frame allocations.
     /// </summary>
+    [DefaultExecutionOrder(-200)]
     public sealed class InputRouter : MonoBehaviour
     {
         static readonly Plane GroundPlane = new Plane(Vector3.up, Vector3.zero);
@@ -18,6 +19,8 @@ namespace Stickman.Input
         Transform _heroTransform;
         Vector3 _heroFacingFallback = new Vector3(0.7071f, 0f, 0.7071f);
 
+        bool _touchUiInitialized;
+        bool _touchUiEnabled;
         bool _queuedCable;
         Vector3 _queuedCableDir;
         bool _queuedSpin;
@@ -27,12 +30,39 @@ namespace Stickman.Input
         float _pcCableDownTime;
         bool _pcCancelCable;
 
-        public bool TouchUiEnabled { get; private set; }
+        bool _pcPanning;
+        Vector2 _pcPanStartMouse;
+
+        public bool TouchUiEnabled
+        {
+            get
+            {
+                EnsureTouchUiInit();
+                return _touchUiEnabled;
+            }
+        }
         public Vector2 MoveVector { get; private set; }
         public bool IsAimingCable { get; private set; }
         public bool IsCancellingCable { get; private set; }
         public Vector3 AimDirectionXZ { get; private set; }
+        public Vector3 CameraPanOffsetXZ { get; private set; }
+        public bool IsCameraPanning { get; private set; }
         public bool BlockGameplayInput { get; set; }
+
+        public void SetCameraPan(Vector3 offsetXZ, bool panning)
+        {
+            offsetXZ.y = 0f;
+            CameraPanOffsetXZ = panning ? offsetXZ : Vector3.zero;
+            IsCameraPanning = panning;
+        }
+
+        void EnsureTouchUiInit()
+        {
+            if (_touchUiInitialized) return;
+            _touchUiInitialized = true;
+            string[] args = System.Environment.GetCommandLineArgs();
+            _touchUiEnabled = Application.isMobilePlatform || CommandLine.Has(args, "-touch-ui");
+        }
 
         public void Setup(TouchJoystick joystick, AimStick aimStick, UnityEngine.Camera mainCam, Transform heroTransform)
         {
@@ -106,8 +136,7 @@ namespace Stickman.Input
 
         void Awake()
         {
-            string[] args = System.Environment.GetCommandLineArgs();
-            TouchUiEnabled = Application.isMobilePlatform || CommandLine.Has(args, "-touch-ui");
+            EnsureTouchUiInit();
         }
 
         void Update()
@@ -118,6 +147,9 @@ namespace Stickman.Input
                 MoveVector = Vector2.zero;
                 IsAimingCable = false;
                 IsCancellingCable = false;
+                _pcPanning = false;
+                CameraPanOffsetXZ = Vector3.zero;
+                IsCameraPanning = false;
                 return;
             }
 
@@ -203,6 +235,30 @@ namespace Stickman.Input
                     _queuedCableDir = quick ? _heroFacingFallback : ReadMouseAimDirection();
                 }
                 _pcCancelCable = false;
+            }
+
+            // PC camera pan via middle-mouse or right-mouse drag (when not aiming cable)
+            if (mouse != null)
+            {
+                bool panHeld = mouse.middleButton.isPressed || (mouse.rightButton.isPressed && !_pcAimingCable);
+                if (panHeld && !_pcPanning)
+                {
+                    _pcPanning = true;
+                    _pcPanStartMouse = mouse.position.ReadValue();
+                }
+                else if (panHeld && _pcPanning)
+                {
+                    Vector2 delta = mouse.position.ReadValue() - _pcPanStartMouse;
+                    float scale = 0.045f * SettingsStore.Current.cameraPanSensitivity;
+                    Vector3 offset = new Vector3(delta.x * scale, 0f, delta.y * scale);
+                    if (offset.magnitude > 28f) offset = offset.normalized * 28f;
+                    SetCameraPan(offset, true);
+                }
+                else if (_pcPanning)
+                {
+                    _pcPanning = false;
+                    SetCameraPan(Vector3.zero, false);
+                }
             }
         }
 

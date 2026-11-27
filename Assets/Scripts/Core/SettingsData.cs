@@ -10,6 +10,7 @@ namespace Stickman.Core
         public int targetFps;
         public float cameraPitch = 55f;
         public float cameraDistance = 28f;
+        public float cameraPanSensitivity = 1.0f;
         public float aimSensitivity = 1.0f;
         public float joystickDeadZone = 0.10f;
         public bool showAimGuide = true;
@@ -43,6 +44,7 @@ namespace Stickman.Core
                 targetFps = 0;
             cameraPitch = Mathf.Clamp(cameraPitch, 45f, 65f);
             cameraDistance = Mathf.Clamp(cameraDistance, 20f, 36f);
+            cameraPanSensitivity = Mathf.Clamp(cameraPanSensitivity <= 0f ? 1f : cameraPanSensitivity, 0.4f, 2.5f);
             aimSensitivity = Mathf.Clamp(aimSensitivity, 0.5f, 2.0f);
             joystickDeadZone = Mathf.Clamp(joystickDeadZone, 0.05f, 0.30f);
             if (language != "en" && language != "id") language = "id";

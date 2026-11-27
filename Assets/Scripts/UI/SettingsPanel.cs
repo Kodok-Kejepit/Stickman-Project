@@ -20,6 +20,8 @@ namespace Stickman.UI
         Text _pitchValText;
         Slider _zoomSlider;
         Text _zoomValText;
+        Slider _panSensSlider;
+        Text _panSensValText;
         Slider _sensSlider;
         Text _sensValText;
         Slider _dzSlider;
@@ -69,18 +71,18 @@ namespace Stickman.UI
             cardGo.transform.SetParent(transform, false);
             var cardRt = cardGo.AddComponent<RectTransform>();
             cardRt.anchorMin = cardRt.anchorMax = new Vector2(0.5f, 0.5f);
-            cardRt.sizeDelta = new Vector2(760f, 640f);
+            cardRt.sizeDelta = new Vector2(780f, 690f);
             var cardImg = cardGo.AddComponent<Image>();
             cardImg.color = new Color(0.09f, 0.12f, 0.16f, 0.96f);
 
             var vlg = cardGo.AddComponent<VerticalLayoutGroup>();
-            vlg.padding = new RectOffset(28, 28, 22, 22);
-            vlg.spacing = 10f;
+            vlg.padding = new RectOffset(28, 28, 20, 20);
+            vlg.spacing = 8f;
             vlg.childControlHeight = false;
             vlg.childControlWidth = true;
             vlg.childForceExpandWidth = true;
 
-            _titleText = AddLabel(cardRt, "SETTINGS", 26, TextAnchor.MiddleCenter, Color.white, 38f);
+            _titleText = AddLabel(cardRt, "SETTINGS", 26, TextAnchor.MiddleCenter, Color.white, 36f);
 
             _fpsBtnText = AddCycleRow(cardRt, "Target FPS", CycleFps);
             AddSliderRow(cardRt, "Camera Pitch", 45f, 65f, out _pitchSlider, out _pitchValText, val =>
@@ -91,6 +93,11 @@ namespace Stickman.UI
             AddSliderRow(cardRt, "Camera Distance", 20f, 36f, out _zoomSlider, out _zoomValText, val =>
             {
                 SettingsStore.Current.cameraDistance = val;
+                SaveAndNotify();
+            });
+            AddSliderRow(cardRt, "Camera Pan Sensitivity", 0.4f, 2.5f, out _panSensSlider, out _panSensValText, val =>
+            {
+                SettingsStore.Current.cameraPanSensitivity = val;
                 SaveAndNotify();
             });
             AddSliderRow(cardRt, "Aim Sensitivity", 0.5f, 2.0f, out _sensSlider, out _sensValText, val =>
@@ -138,6 +145,8 @@ namespace Stickman.UI
             _pitchValText.text = s.cameraPitch.ToString("0") + "°";
             _zoomSlider.value = s.cameraDistance;
             _zoomValText.text = s.cameraDistance.ToString("0.0") + "u";
+            _panSensSlider.value = s.cameraPanSensitivity;
+            _panSensValText.text = s.cameraPanSensitivity.ToString("0.00") + "x";
             _sensSlider.value = s.aimSensitivity;
             _sensValText.text = s.aimSensitivity.ToString("0.00") + "x";
             _dzSlider.value = s.joystickDeadZone;
@@ -217,14 +226,14 @@ namespace Stickman.UI
 
         void AddSliderRow(RectTransform parent, string label, float min, float max, out Slider slider, out Text valText, Action<float> onVal)
         {
-            var row = CreateRow(parent, 38f);
+            var row = CreateRow(parent, 34f);
             AddRowLabel(row, label, 0.42f);
 
             var sGo = new GameObject("Slider");
             sGo.transform.SetParent(row, false);
             var srt = sGo.AddComponent<RectTransform>();
-            srt.anchorMin = new Vector2(0.44f, 0.15f);
-            srt.anchorMax = new Vector2(0.84f, 0.85f);
+            srt.anchorMin = new Vector2(0.44f, 0.12f);
+            srt.anchorMax = new Vector2(0.84f, 0.88f);
             srt.offsetMin = srt.offsetMax = Vector2.zero;
 
             var bg = new GameObject("Bg").AddComponent<Image>();
@@ -242,6 +251,11 @@ namespace Stickman.UI
             var fill = new GameObject("Fill").AddComponent<Image>();
             fill.transform.SetParent(fillArea, false);
             fill.color = new Color(0.22f, 0.78f, 0.96f, 1f);
+            var fillRt = fill.rectTransform;
+            fillRt.anchorMin = Vector2.zero;
+            fillRt.anchorMax = Vector2.one;
+            fillRt.offsetMin = Vector2.zero;
+            fillRt.offsetMax = Vector2.zero;
 
             var handleArea = new GameObject("HandleArea").AddComponent<RectTransform>();
             handleArea.SetParent(srt, false);
@@ -251,13 +265,16 @@ namespace Stickman.UI
             var handle = new GameObject("Handle").AddComponent<Image>();
             handle.transform.SetParent(handleArea, false);
             handle.color = Color.white;
-            handle.rectTransform.sizeDelta = new Vector2(22f, 26f);
+            var hRt = handle.rectTransform;
+            hRt.anchorMin = new Vector2(0f, 0.5f);
+            hRt.anchorMax = new Vector2(0f, 0.5f);
+            hRt.sizeDelta = new Vector2(20f, 24f);
 
             slider = sGo.AddComponent<Slider>();
             slider.minValue = min;
             slider.maxValue = max;
-            slider.fillRect = fill.rectTransform;
-            slider.handleRect = handle.rectTransform;
+            slider.fillRect = fillRt;
+            slider.handleRect = hRt;
             slider.targetGraphic = handle;
             slider.onValueChanged.AddListener(v => onVal(v));
 
