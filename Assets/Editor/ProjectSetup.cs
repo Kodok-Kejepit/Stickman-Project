@@ -1,9 +1,11 @@
-// One-shot project configuration: URP pipeline, runtime material, player settings, Boot scene and Build Settings.
-// Safe to run again; every step is idempotent.
+// One-shot project configuration: layers, URP pipeline, runtime materials, tuning ScriptableObjects,
+// Boot + Practice scenes, and Build Settings. Safe to run repeatedly.
 // Batchmode: -executeMethod Stickman.EditorTools.ProjectSetup.Run
 using System.Collections.Generic;
 using System.IO;
+using Stickman.Camera;
 using Stickman.Core;
+using Stickman.Hero;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.SceneManagement;
@@ -20,18 +22,46 @@ namespace Stickman.EditorTools
         public const string PipelineAssetPath = RenderSettingsDir + "/URP_Mobile.asset";
         public const string RendererAssetPath = RenderSettingsDir + "/URP_Mobile_Renderer.asset";
         public const string RuntimeLitPath = "Assets/Resources/RuntimeLit.mat";
+        public const string RuntimeUnlitPath = "Assets/Resources/RuntimeUnlit.mat";
+        public const string RuntimeUnlitTransPath = "Assets/Resources/RuntimeUnlitTransparent.mat";
+        public const string HeroTuningPath = "Assets/Data/HeroTuning.asset";
+        public const string CameraTuningPath = "Assets/Data/CameraTuning.asset";
+
         const string DefaultPostProcessData = "Packages/com.unity.render-pipelines.universal/Runtime/Data/PostProcessData.asset";
         const string AppId = "com.kodokkejepit.stickman";
 
         [MenuItem("Stickman/Setup Project")]
         public static void Run()
         {
+            EnsureLayers();
             EnsureRenderPipeline();
-            EnsureRuntimeMaterial();
+            EnsureRuntimeMaterials();
+            EnsureTuningAssets();
             EnsurePlayerSettings();
             EnsureBootScene();
+            ArenaBuilder.BuildPracticeScene();
+            EnsureBuildSettings();
             AssetDatabase.SaveAssets();
             Debug.Log("Stickman: project setup done");
+        }
+
+        static void EnsureLayers()
+        {
+            var tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
+            var layers = tagManager.FindProperty("layers");
+            if (layers == null || !layers.isArray) return;
+
+            SetLayerName(layers, HeroMotor.WallLayer, "Wall");
+            SetLayerName(layers, HeroMotor.DummyLayer, "Dummy");
+            SetLayerName(layers, HeroMotor.HeroLayer, "Hero");
+            tagManager.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        static void SetLayerName(SerializedProperty layers, int index, string name)
+        {
+            if (index >= layers.arraySize) return;
+            var prop = layers.GetArrayElementAtIndex(index);
+            if (prop != null) prop.stringValue = name;
         }
 
         static void EnsureRenderPipeline()
@@ -58,14 +88,64 @@ namespace Stickman.EditorTools
             QualitySettings.SetQualityLevel(current, false);
         }
 
-        // Runtime-created meshes must use a URP material, or they render magenta in player builds.
-        static void EnsureRuntimeMaterial()
+        static void EnsureRuntimeMaterials()
         {
-            if (AssetDatabase.LoadAssetAtPath<Material>(RuntimeLitPath) != null) return;
-            Directory.CreateDirectory(Path.GetDirectoryName(RuntimeLitPath));
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            mat.SetColor("_BaseColor", new Color(0.55f, 0.58f, 0.62f));
-            AssetDatabase.CreateAsset(mat, RuntimeLitPath);
+            Directory.CreateDirectory("Assets/Resources");
+
+            CreateOrUpdateMaterial(RuntimeLitPath, "Universal Render Pipeline/Lit", false, new Color(0.55f, 0.58f, 0.62f));
+            CreateOrUpdateMaterial(RuntimeUnlitPath, "Universal Render Pipeline/Unlit", false, Color.white);
+            CreateOrUpdateMaterial(RuntimeUnlitTransPath, "Universal Render Pipeline/Unlit", true, Color.white);
+        }
+
+        static void CreateOrUpdateMaterial(string path, string shaderName, bool transparent, Color baseColor)
+        {
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            var shader = Shader.Find(shaderName);
+            if (mat == null)
+            {
+                mat = new Material(shader);
+                AssetDatabase.CreateAsset(mat, path);
+            }
+            mat.shader = shader;
+            mat.SetColor("_BaseColor", baseColor);
+            mat.enableInstancing = true;
+
+            if (transparent)
+            {
+                mat.SetFloat("_Surface", 1f);
+                mat.SetFloat("_Blend", 0f);
+                mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+                mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+                mat.SetFloat("_ZWrite", 0f);
+                mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                mat.renderQueue = 3000;
+            }
+            else
+            {
+                mat.SetFloat("_Surface", 0f);
+                mat.SetFloat("_ZWrite", 1f);
+                mat.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                mat.renderQueue = -1;
+            }
+
+            EditorUtility.SetDirty(mat);
+        }
+
+        static void EnsureTuningAssets()
+        {
+            Directory.CreateDirectory("Assets/Data");
+
+            if (AssetDatabase.LoadAssetAtPath<HeroTuning>(HeroTuningPath) == null)
+            {
+                var ht = ScriptableObject.CreateInstance<HeroTuning>();
+                AssetDatabase.CreateAsset(ht, HeroTuningPath);
+            }
+
+            if (AssetDatabase.LoadAssetAtPath<CameraTuning>(CameraTuningPath) == null)
+            {
+                var ct = ScriptableObject.CreateInstance<CameraTuning>();
+                AssetDatabase.CreateAsset(ct, CameraTuningPath);
+            }
         }
 
         static void EnsurePlayerSettings()
@@ -86,11 +166,10 @@ namespace Stickman.EditorTools
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
 
-            // Desktop test builds: windowed-fullscreen at native resolution, keep running when unfocused.
             PlayerSettings.fullScreenMode = FullScreenMode.FullScreenWindow;
             PlayerSettings.runInBackground = true;
 
-            // Input System only (no legacy UnityEngine.Input). 0 = old, 1 = new, 2 = both.
+            // Input System only (no legacy UnityEngine.Input).
             var playerSettings = Unsupported.GetSerializedAssetInterfaceSingleton("PlayerSettings");
             var so = new SerializedObject(playerSettings);
             var handler = so.FindProperty("activeInputHandler");
@@ -103,41 +182,26 @@ namespace Stickman.EditorTools
 
         static void EnsureBootScene()
         {
-            if (!File.Exists(BootScene))
+            Directory.CreateDirectory(Path.GetDirectoryName(BootScene));
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            new GameObject("GameBootstrap").AddComponent<GameBootstrap>();
+            var camGo = new GameObject("Main Camera");
+            camGo.tag = "MainCamera";
+            var cam = camGo.AddComponent<UnityEngine.Camera>();
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.08f, 0.10f, 0.13f);
+
+            EditorSceneManager.SaveScene(scene, BootScene);
+        }
+
+        static void EnsureBuildSettings()
+        {
+            var scenes = new List<EditorBuildSettingsScene>
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(BootScene));
-                var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
-
-                new GameObject("GameBootstrap").AddComponent<GameBootstrap>();
-
-                // Placeholder view so a screenshot proves URP renders (no magenta) and the aspect ratio is right.
-                var cam = Camera.main;
-                if (cam != null)
-                {
-                    cam.transform.SetPositionAndRotation(new Vector3(0f, 18f, -12.6f), Quaternion.Euler(55f, 0f, 0f));
-                    cam.fieldOfView = 32f;
-                    cam.clearFlags = CameraClearFlags.SolidColor;
-                    cam.backgroundColor = new Color(0.12f, 0.13f, 0.15f);
-                }
-
-                var mat = AssetDatabase.LoadAssetAtPath<Material>(RuntimeLitPath);
-                var floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
-                floor.name = "Floor";
-                floor.transform.localScale = new Vector3(4f, 1f, 4f);
-                floor.GetComponent<MeshRenderer>().sharedMaterial = mat;
-
-                var marker = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                marker.name = "Marker";
-                marker.transform.position = new Vector3(0f, 1f, 0f);
-                marker.GetComponent<MeshRenderer>().sharedMaterial = mat;
-
-                EditorSceneManager.SaveScene(scene, BootScene);
-            }
-
-            // Boot stays first; other registered scenes are kept.
-            var scenes = new List<EditorBuildSettingsScene> { new EditorBuildSettingsScene(BootScene, true) };
-            foreach (var existing in EditorBuildSettings.scenes)
-                if (existing.path != BootScene) scenes.Add(existing);
+                new EditorBuildSettingsScene(BootScene, true),
+                new EditorBuildSettingsScene(ArenaBuilder.PracticeScenePath, true)
+            };
             EditorBuildSettings.scenes = scenes.ToArray();
         }
     }

@@ -2,6 +2,8 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
+using Stickman.Camera;
+using Stickman.Hero;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -37,19 +39,27 @@ namespace Stickman.Tests
                 string text = File.ReadAllText(path);
                 if (!text.Contains("GameObject.CreatePrimitive(")) continue;
                 Assert.That(text.Contains("sharedMaterial"), Is.True,
-                    path + ": CreatePrimitive renders magenta in URP builds; assign Resources/RuntimeLit");
+                    path + ": CreatePrimitive renders magenta in URP builds; assign Resources URP material");
             }
-            var mat = Resources.Load<Material>("RuntimeLit");
-            Assert.That(mat, Is.Not.Null, "Assets/Resources/RuntimeLit.mat is missing");
+            CheckUrpMat("RuntimeLit");
+            CheckUrpMat("RuntimeUnlit");
+            CheckUrpMat("RuntimeUnlitTransparent");
+        }
+
+        static void CheckUrpMat(string resourceName)
+        {
+            var mat = Resources.Load<Material>(resourceName);
+            Assert.That(mat, Is.Not.Null, "Assets/Resources/" + resourceName + ".mat is missing");
             Assert.That(mat.shader.name, Does.StartWith("Universal Render Pipeline/"));
         }
 
         [Test]
-        public void BootIsTheFirstSceneAndEverySceneIsInBuildSettings()
+        public void BootIsFirstAndEverySceneIsInBuildSettings()
         {
             var registered = EditorBuildSettings.scenes;
-            Assert.That(registered.Length, Is.GreaterThan(0), "no scenes in Build Settings");
+            Assert.That(registered.Length, Is.GreaterThanOrEqualTo(2));
             Assert.That(registered[0].path, Is.EqualTo("Assets/Scenes/Boot.unity"));
+            Assert.That(registered[1].path, Is.EqualTo("Assets/Scenes/Practice.unity"));
             foreach (string scene in Directory.GetFiles("Assets/Scenes", "*.unity", SearchOption.AllDirectories))
             {
                 string path = scene.Replace('\\', '/');
@@ -79,10 +89,31 @@ namespace Stickman.Tests
         }
 
         [Test]
-        public void InputSystemIsTheOnlyInputBackend()
+        public void InputSystemIsTheOnlyInputBackendAndLegacyInputIsUnused()
         {
             string settings = File.ReadAllText("ProjectSettings/ProjectSettings.asset");
             Assert.That(settings, Does.Contain("activeInputHandler: 1"));
+
+            foreach (string path in Directory.GetFiles("Assets/Scripts", "*.cs", SearchOption.AllDirectories))
+            {
+                string text = File.ReadAllText(path);
+                Assert.That(text, Does.Not.Contain("UnityEngine.Input."), path + " must not use legacy UnityEngine.Input");
+            }
+        }
+
+        [Test]
+        public void RequiredPhysicsLayersExist()
+        {
+            Assert.That(LayerMask.LayerToName(HeroMotor.WallLayer), Is.EqualTo("Wall"));
+            Assert.That(LayerMask.LayerToName(HeroMotor.DummyLayer), Is.EqualTo("Dummy"));
+            Assert.That(LayerMask.LayerToName(HeroMotor.HeroLayer), Is.EqualTo("Hero"));
+        }
+
+        [Test]
+        public void TuningAssetsLoadCleanly()
+        {
+            Assert.That(AssetDatabase.LoadAssetAtPath<HeroTuning>("Assets/Data/HeroTuning.asset"), Is.Not.Null);
+            Assert.That(AssetDatabase.LoadAssetAtPath<CameraTuning>("Assets/Data/CameraTuning.asset"), Is.Not.Null);
         }
 
         [Test]

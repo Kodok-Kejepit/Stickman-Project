@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ecdc4e47460b34758630ebb1dd72203, type: 3}
+  m_Name: HeroTuning
+  m_EditorClassIdentifier: Stickman::Stickman.Hero.HeroTuning
+  moveSpeed: 6.5
+  heroRadius: 0.45
+  heroHeight: 1.8
+  turnSpeedDegPerSec: 900
+  cableMaxRange: 15.5
+  cableShootSpeed: 72
+  cableRetractSpeed: 82
+  singleCablePullSpeed: 24
+  dualCablePullSpeed: 29
+  cableCooldown: 0.12
+  cableDetachRadius: 0.9
+  postDetachGlideSpeed: 11
+  postDetachGlideDuration: 0.11
+  oppositeCancelDot: -0.92
+  blockedDetachSeconds: 0.09
+  maxEnergy: 100
+  energyRegenPerSec: 5
+  baseBonusRegenPerSec: 25
+  cableEnergyCost: 18
+  cableConsecutiveDiscount: 2
+  cableMinEnergyCost: 12
+  cableConsecutiveWindow: 2
+  cableMissEnergyFactor: 1
+  energyRefundPerMark: 8
+  spinRadius: 3.2
+  spinCooldown: 3
+  spinEnergyCost: 20
+  spinBaseDamage: 320
+  airborneDamageBonusMax: 0.3
+  autoSpinEnergyCost: 15
+  autoSpinInternalCooldown: 0.35
+  maxPreyMarks: 2
+  preyMarkDuration: 5
+  dashRange: 6.5
+  dashSpeed: 38
+  dashCooldown: 14
+  dashBaseDamage: 520
+  dashBonusPerMark: 0.2
+  basicRange: 2.6
+  basicCooldown: 0.75
+  basicDamage: 130
